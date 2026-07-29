@@ -1,0 +1,70 @@
+import { Request, Response } from "express";
+import * as reservationService from "../services/reservationService";
+
+export async function listReservations(req: Request, res: Response): Promise<void> {
+  try {
+    const result = await reservationService.listReservations(
+      req.query as unknown as reservationService.ReservationQueryOptions,
+      req.user!.id,
+      req.user!.role,
+    );
+    res.status(200).json({ data: result.data, meta: {
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+    }});
+  } catch (err: unknown) {
+    const error = err as Error & { status?: number };
+    res.status(error.status ?? 500).json({ error: error.message ?? "Failed to list reservations." });
+  }
+}
+
+export async function getReservation(req: Request, res: Response): Promise<void> {
+  try {
+    const reservation = await reservationService.getReservationById(
+      req.params.id,
+      req.user!.id,
+      req.user!.role,
+    );
+    res.status(200).json({ data: reservation });
+  } catch (err: unknown) {
+    const error = err as Error & { status?: number };
+    res.status(error.status ?? 500).json({ error: error.message ?? "Failed to retrieve reservation." });
+  }
+}
+
+export async function createReservation(req: Request, res: Response): Promise<void> {
+  try {
+    const created = await reservationService.createReservation(req.body, req.user!.id, req.user!.role);
+    res.status(201).json({ message: "Reservation created successfully.", data: created });
+  } catch (err: unknown) {
+    const error = err as Error & { status?: number };
+    res.status(error.status ?? 500).json({ error: error.message ?? "Failed to create reservation." });
+  }
+}
+
+export async function updateReservation(req: Request, res: Response): Promise<void> {
+  try {
+    const updated = await reservationService.updateReservation(
+      req.params.id,
+      req.body,
+      req.user!.id,
+      req.user!.role,
+    );
+    res.status(200).json({ message: "Reservation updated successfully.", data: updated });
+  } catch (err: unknown) {
+    const error = err as Error & { status?: number };
+    res.status(error.status ?? 500).json({ error: error.message ?? "Failed to update reservation." });
+  }
+}
+
+export async function deleteReservation(req: Request, res: Response): Promise<void> {
+  try {
+    await reservationService.deleteReservation(req.params.id, req.user!.id, req.user!.role);
+    res.status(200).json({ message: "Reservation deleted successfully." });
+  } catch (err: unknown) {
+    const error = err as Error & { status?: number };
+    res.status(error.status ?? 500).json({ error: error.message ?? "Failed to delete reservation." });
+  }
+}
