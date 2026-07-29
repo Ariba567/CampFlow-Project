@@ -7,6 +7,7 @@ import reservationRouter from "./reservations";
 import activityRouter from "./activities";
 import reviewRouter from "./reviews";
 import pricingRouter from "./pricing";
+import paymentRouter from "./payments";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use("/reservations", reservationRouter);
 router.use("/activities", activityRouter);
 router.use("/reviews", reviewRouter);
 router.use("/pricing", pricingRouter);
+router.use("/payments", paymentRouter);
 
 export default router;
