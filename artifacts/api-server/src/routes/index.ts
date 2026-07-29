@@ -11,6 +11,7 @@ import paymentRouter from "./payments";
 import notificationRouter from "./notifications";
 import customerRouter from "./customers";
 import managerRouter from "./managers";
+import administratorRouter from "./administrators";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use("/payments", paymentRouter);
 router.use("/notifications", notificationRouter);
 router.use("/customers", customerRouter);
 router.use("/managers", managerRouter);
+router.use("/administrators", administratorRouter);
 
 export default router;
