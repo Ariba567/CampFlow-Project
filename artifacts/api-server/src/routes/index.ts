@@ -6,6 +6,7 @@ import campsiteRouter from "./campsites";
 import reservationRouter from "./reservations";
 import activityRouter from "./activities";
 import reviewRouter from "./reviews";
+import pricingRouter from "./pricing";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use("/campsites", campsiteRouter);
 router.use("/reservations", reservationRouter);
 router.use("/activities", activityRouter);
 router.use("/reviews", reviewRouter);
+router.use("/pricing", pricingRouter);
 
 export default router;
