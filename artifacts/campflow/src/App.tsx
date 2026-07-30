@@ -1,79 +1,86 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/context/AuthContext";
-import ProtectedRoute from "@/components/common/ProtectedRoute";
-import GuestRoute from "@/components/common/GuestRoute";
-import { Toaster } from "@/components/ui/sonner";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from '@/context/AuthContext';
+import ProtectedRoute from '@/components/common/ProtectedRoute';
+import GuestRoute from '@/components/common/GuestRoute';
+import Layout from '@/components/common/Layout';
+import PagePlaceholder from '@/components/common/PagePlaceholder';
+import { Toaster } from '@/components/ui/sonner';
 
-// ─── Placeholder page components (replaced during feature development) ────────
-function ComingSoon({ label }: { label: string }) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center space-y-3">
-        <h1 className="text-3xl font-bold text-foreground">CampFlow</h1>
-        <p className="text-muted-foreground">{label} – coming soon</p>
-      </div>
-    </div>
-  );
-}
+import Home from '@/pages/home';
+import Campgrounds from '@/pages/campgrounds';
+import CampgroundDetail from '@/pages/campground-detail';
+import CampsiteDetail from '@/pages/campsite-detail';
+import Pricing from '@/pages/pricing';
+import Activities from '@/pages/activities';
+import About from '@/pages/about';
+import Contact from '@/pages/contact';
+import FAQ from '@/pages/faq';
+import Dashboard from '@/pages/dashboard';
+import DashboardBookings from '@/pages/dashboard-bookings';
+import DashboardProfile from '@/pages/dashboard-profile';
+import DashboardReviews from '@/pages/dashboard-reviews';
+import DashboardAdmin from '@/pages/dashboard-admin';
+import DashboardAdminCampgrounds from '@/pages/dashboard-admin-campgrounds';
+import DashboardAdminReservations from '@/pages/dashboard-admin-reservations';
+import DashboardAdminPricing from '@/pages/dashboard-admin-pricing';
+import DashboardAdminUsers from '@/pages/dashboard-admin-users';
+import DashboardAdminAnalytics from '@/pages/dashboard-admin-analytics';
 
-// ─── Router ───────────────────────────────────────────────────────────────────
 function Router() {
-  // BASE_URL is injected by Vite from the artifact's previewPath.
-  // Strip trailing slash so BrowserRouter basename works correctly.
-  const basename = import.meta.env.BASE_URL.replace(/\/$/, "") || "/";
+  const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
 
   return (
     <BrowserRouter basename={basename}>
       <Routes>
-        {/* ── Public routes ── */}
-        <Route path="/" element={<ComingSoon label="Home" />} />
-        <Route path="/campgrounds" element={<ComingSoon label="Campgrounds" />} />
-        <Route path="/campgrounds/:slug" element={<ComingSoon label="Campground Detail" />} />
-        <Route path="/campgrounds/:slug/sites/:siteId" element={<ComingSoon label="Campsite Detail" />} />
-        <Route path="/pricing" element={<ComingSoon label="Pricing" />} />
-        <Route path="/activities" element={<ComingSoon label="Activities" />} />
-        <Route path="/about" element={<ComingSoon label="About" />} />
-        <Route path="/contact" element={<ComingSoon label="Contact" />} />
-        <Route path="/faq" element={<ComingSoon label="FAQ" />} />
-        <Route path="/unauthorised" element={<ComingSoon label="Unauthorised" />} />
+        <Route path="/" element={<Layout><Home /></Layout>} />
+        <Route path="/campgrounds" element={<Layout><Campgrounds /></Layout>} />
+        <Route path="/campgrounds/:slug" element={<Layout><CampgroundDetail /></Layout>} />
+        <Route path="/campgrounds/:slug/sites/:siteId" element={<Layout><CampsiteDetail /></Layout>} />
+        <Route path="/pricing" element={<Layout><Pricing /></Layout>} />
+        <Route path="/activities" element={<Layout><Activities /></Layout>} />
+        <Route path="/about" element={<Layout><About /></Layout>} />
+        <Route path="/contact" element={<Layout><Contact /></Layout>} />
+        <Route path="/faq" element={<Layout><FAQ /></Layout>} />
+        <Route
+          path="/unauthorised"
+          element={
+            <Layout>
+              <PagePlaceholder title="Unauthorised" subtitle="You do not have permission to access this page." actionLabel="Return home" />
+            </Layout>
+          }
+        />
 
-        {/* ── Guest-only routes (redirect if already logged in) ── */}
         <Route element={<GuestRoute />}>
-          <Route path="/login" element={<ComingSoon label="Login" />} />
-          <Route path="/register" element={<ComingSoon label="Register" />} />
+          <Route path="/login" element={<Layout><PagePlaceholder title="Login" /></Layout>} />
+          <Route path="/register" element={<Layout><PagePlaceholder title="Register" /></Layout>} />
         </Route>
 
-        {/* ── Protected: any authenticated user ── */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/reservation" element={<ComingSoon label="Reservation" />} />
-          <Route path="/dashboard" element={<ComingSoon label="Customer Dashboard" />} />
-          <Route path="/dashboard/bookings" element={<ComingSoon label="My Bookings" />} />
-          <Route path="/dashboard/profile" element={<ComingSoon label="Profile Settings" />} />
-          <Route path="/dashboard/reviews" element={<ComingSoon label="My Reviews" />} />
+          <Route path="/reservation" element={<Layout><PagePlaceholder title="Reservation" /></Layout>} />
+          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/dashboard/bookings" element={<Layout><DashboardBookings /></Layout>} />
+          <Route path="/dashboard/profile" element={<Layout><DashboardProfile /></Layout>} />
+          <Route path="/dashboard/reviews" element={<Layout><DashboardReviews /></Layout>} />
         </Route>
 
-        {/* ── Protected: manager or admin only ── */}
-        <Route element={<ProtectedRoute roles={["manager", "admin"]} />}>
-          <Route path="/dashboard/admin" element={<ComingSoon label="Admin Dashboard" />} />
-          <Route path="/dashboard/admin/campgrounds" element={<ComingSoon label="Manage Campgrounds" />} />
-          <Route path="/dashboard/admin/reservations" element={<ComingSoon label="Manage Reservations" />} />
-          <Route path="/dashboard/admin/pricing" element={<ComingSoon label="Pricing Management" />} />
+        <Route element={<ProtectedRoute roles={['manager', 'admin']} />}>
+          <Route path="/dashboard/admin" element={<Layout><DashboardAdmin /></Layout>} />
+          <Route path="/dashboard/admin/campgrounds" element={<Layout><DashboardAdminCampgrounds /></Layout>} />
+          <Route path="/dashboard/admin/reservations" element={<Layout><DashboardAdminReservations /></Layout>} />
+          <Route path="/dashboard/admin/pricing" element={<Layout><DashboardAdminPricing /></Layout>} />
         </Route>
 
-        {/* ── Protected: admin only ── */}
-        <Route element={<ProtectedRoute roles={["admin"]} />}>
-          <Route path="/dashboard/admin/users" element={<ComingSoon label="User Management" />} />
-          <Route path="/dashboard/admin/analytics" element={<ComingSoon label="Analytics" />} />
+        <Route element={<ProtectedRoute roles={['admin']} />}>
+          <Route path="/dashboard/admin/users" element={<Layout><DashboardAdminUsers /></Layout>} />
+          <Route path="/dashboard/admin/analytics" element={<Layout><DashboardAdminAnalytics /></Layout>} />
         </Route>
 
-        {/* ── Catch-all ── */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
 
-// ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   return (
     <AuthProvider>
