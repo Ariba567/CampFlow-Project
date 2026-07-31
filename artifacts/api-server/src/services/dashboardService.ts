@@ -40,12 +40,12 @@ export async function listCustomerReservations(userId: string, options: { page: 
   if (options.upcoming) filters.checkIn = { $gte: new Date() };
 
   const sortField = options.sort || "createdAt";
-  const sort = { [sortField]: options.order === "asc" ? 1 : -1 } as mongoose.SortOrder;
+  const sort = { [sortField]: options.order === "asc" ? 1 : -1 } as unknown as mongoose.SortOrder;
   const skip = (options.page - 1) * options.limit;
 
   const [data, total] = await Promise.all([
     Reservation.find(filters)
-      .sort(sort)
+      .sort(sort as any)
       .skip(skip)
       .limit(options.limit)
       .populate("campsite", "name siteNumber")
@@ -168,10 +168,10 @@ export async function listManagerReservations(userId: string, options: { page: n
 
   const skip = (options.page - 1) * options.limit;
   const sortField = options.sort || "createdAt";
-  const sort = { [sortField]: options.order === "asc" ? 1 : -1 } as mongoose.SortOrder;
+  const sort = { [sortField]: options.order === "asc" ? 1 : -1 } as unknown as mongoose.SortOrder;
 
   const [data, total] = await Promise.all([
-    Reservation.find(filters).sort(sort).skip(skip).limit(options.limit).populate("customer", "firstName lastName email").exec(),
+    Reservation.find(filters).sort(sort as any).skip(skip).limit(options.limit).populate("customer", "firstName lastName email").exec(),
     Reservation.countDocuments(filters),
   ]);
   return { data, total, page: options.page, limit: options.limit, totalPages: Math.max(Math.ceil(total / options.limit), 1) };

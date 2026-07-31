@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import * as notificationService from "../services/notificationService";
+import { UserRole } from "../models/User";
 
 export async function listNotifications(req: Request, res: Response): Promise<void> {
   try {
     const result = await notificationService.listNotifications(
       req.query as unknown as notificationService.NotificationQueryOptions,
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
 
     res.status(200).json({
@@ -27,9 +28,9 @@ export async function listNotifications(req: Request, res: Response): Promise<vo
 export async function getNotification(req: Request, res: Response): Promise<void> {
   try {
     const notification = await notificationService.getNotificationById(
-      req.params.id,
+      String(req.params.id),
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
     res.status(200).json({ data: notification });
   } catch (err: unknown) {
@@ -40,7 +41,7 @@ export async function getNotification(req: Request, res: Response): Promise<void
 
 export async function createNotification(req: Request, res: Response): Promise<void> {
   try {
-    const created = await notificationService.createNotification(req.body, req.user!.role);
+    const created = await notificationService.createNotification(req.body, req.user!.role as UserRole);
     res.status(201).json({ message: "Notification created successfully.", data: created });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };
@@ -51,10 +52,10 @@ export async function createNotification(req: Request, res: Response): Promise<v
 export async function updateNotification(req: Request, res: Response): Promise<void> {
   try {
     const updated = await notificationService.updateNotification(
-      req.params.id,
+      String(req.params.id),
       req.body,
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
     res.status(200).json({ message: "Notification updated successfully.", data: updated });
   } catch (err: unknown) {
@@ -65,7 +66,7 @@ export async function updateNotification(req: Request, res: Response): Promise<v
 
 export async function deleteNotification(req: Request, res: Response): Promise<void> {
   try {
-    await notificationService.deleteNotification(req.params.id, req.user!.id, req.user!.role);
+    await notificationService.deleteNotification(String(req.params.id), req.user!.id, req.user!.role as UserRole);
     res.status(200).json({ message: "Notification deleted successfully." });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };

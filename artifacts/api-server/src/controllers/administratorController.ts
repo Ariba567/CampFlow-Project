@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import * as administratorService from "../services/administratorService";
+import { UserRole } from "../models/User";
 
 export async function listAdministrators(req: Request, res: Response): Promise<void> {
   try {
     const result = await administratorService.listAdministrators(
       req.query as unknown as administratorService.AdministratorQueryOptions,
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
 
     res.status(200).json({
@@ -27,9 +28,9 @@ export async function listAdministrators(req: Request, res: Response): Promise<v
 export async function getAdministrator(req: Request, res: Response): Promise<void> {
   try {
     const administrator = await administratorService.getAdministratorById(
-      req.params.id,
+      String(req.params.id),
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
     res.status(200).json({ data: administrator });
   } catch (err: unknown) {
@@ -51,10 +52,10 @@ export async function createAdministrator(req: Request, res: Response): Promise<
 export async function updateAdministrator(req: Request, res: Response): Promise<void> {
   try {
     const updated = await administratorService.updateAdministrator(
-      req.params.id,
+      String(req.params.id),
       req.body,
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
     res.status(200).json({ message: "Administrator updated successfully.", data: updated });
   } catch (err: unknown) {
@@ -65,7 +66,7 @@ export async function updateAdministrator(req: Request, res: Response): Promise<
 
 export async function deleteAdministrator(req: Request, res: Response): Promise<void> {
   try {
-    await administratorService.deleteAdministrator(req.params.id, req.user!.id, req.user!.role);
+    await administratorService.deleteAdministrator(String(req.params.id), req.user!.id, req.user!.role as UserRole);
     res.status(200).json({ message: "Administrator deleted successfully." });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as reservationService from "../services/reservationService";
+import { UserRole } from "../models/User";
 
 export async function listReservations(req: Request, res: Response): Promise<void> {
   try {
@@ -23,9 +24,9 @@ export async function listReservations(req: Request, res: Response): Promise<voi
 export async function getReservation(req: Request, res: Response): Promise<void> {
   try {
     const reservation = await reservationService.getReservationById(
-      req.params.id,
+      String(req.params.id),
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
     res.status(200).json({ data: reservation });
   } catch (err: unknown) {
@@ -47,10 +48,10 @@ export async function createReservation(req: Request, res: Response): Promise<vo
 export async function updateReservation(req: Request, res: Response): Promise<void> {
   try {
     const updated = await reservationService.updateReservation(
-      req.params.id,
+      String(req.params.id),
       req.body,
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
     res.status(200).json({ message: "Reservation updated successfully.", data: updated });
   } catch (err: unknown) {
@@ -61,7 +62,7 @@ export async function updateReservation(req: Request, res: Response): Promise<vo
 
 export async function deleteReservation(req: Request, res: Response): Promise<void> {
   try {
-    await reservationService.deleteReservation(req.params.id, req.user!.id, req.user!.role);
+    await reservationService.deleteReservation(String(req.params.id), req.user!.id, req.user!.role as UserRole);
     res.status(200).json({ message: "Reservation deleted successfully." });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };

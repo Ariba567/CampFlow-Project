@@ -166,7 +166,7 @@ export async function listPricing(
 
   const [data, total] = await Promise.all([
     Pricing.find(filters)
-      .sort(sort as mongoose.SortOrder)
+      .sort(sort as any)
       .skip(skip)
       .limit(options.limit)
       .populate("campground", "name slug")
@@ -203,7 +203,7 @@ export async function getPricingById(
   }
 
   if (userRole === "manager") {
-    const campground = pricing.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (pricing.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only view pricing for your own campgrounds."), {
         status: 403,
@@ -246,7 +246,7 @@ export async function updatePricing(
   }
 
   if (userRole === "manager") {
-    const campground = pricing.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (pricing.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only update pricing for your own campgrounds."), {
         status: 403,
@@ -284,7 +284,7 @@ export async function deletePricing(
   }
 
   if (userRole === "manager") {
-    const campground = pricing.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (pricing.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only delete pricing for your own campgrounds."), {
         status: 403,

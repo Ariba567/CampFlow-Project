@@ -154,7 +154,7 @@ export async function listCampgrounds(
   const skip = (options.page - 1) * options.limit;
 
   const query = Campground.find(filters)
-    .sort(sort as mongoose.SortOrder)
+    .sort(sort as any)
     .skip(skip)
     .limit(options.limit);
 

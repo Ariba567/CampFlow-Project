@@ -1,9 +1,9 @@
 import express from "express";
 import { z } from "zod";
 import * as dashboardController from "../controllers/dashboardController";
-import authenticate from "../middleware/authenticate";
-import authorize from "../middleware/authorize";
-import validate from "../middleware/validate";
+import { authenticate } from "../middleware/authenticate";
+import { authorize } from "../middleware/authorize";
+import { validate } from "../middleware/validate";
 
 const router = express.Router();
 

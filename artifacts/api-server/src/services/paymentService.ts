@@ -205,7 +205,7 @@ export async function listPayments(
 
   const [data, total] = await Promise.all([
     Payment.find(filters)
-      .sort(sort as mongoose.SortOrder)
+      .sort(sort as any)
       .skip(skip)
       .limit(options.limit)
       .populate("customer", "firstName lastName email")
@@ -250,7 +250,7 @@ export async function getPaymentById(
 
   if (userRole === "manager") {
     const reservation = payment.reservation as { campground?: { manager: mongoose.Types.ObjectId } };
-    const campground = reservation?.campground as { manager: mongoose.Types.ObjectId } | undefined;
+    const campground = (reservation?.campground as any) as { manager: mongoose.Types.ObjectId } | undefined;
 
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only view payments for your own campgrounds."), {
@@ -278,7 +278,7 @@ export async function createPayment(
   }
 
   if (userRole === "manager") {
-    const campground = reservation.campground as { manager: mongoose.Types.ObjectId } | undefined;
+    const campground = (reservation.campground as any) as { manager: mongoose.Types.ObjectId } | undefined;
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only create payments for your own campgrounds."), {
         status: 403,
@@ -338,7 +338,7 @@ export async function updatePayment(
 
   if (userRole === "manager") {
     const currentReservation = payment.reservation as { campground?: { manager: mongoose.Types.ObjectId } };
-    const campground = currentReservation?.campground as { manager: mongoose.Types.ObjectId } | undefined;
+    const campground = (currentReservation?.campground as any) as { manager: mongoose.Types.ObjectId } | undefined;
 
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only update payments for your own campgrounds."), {
@@ -350,7 +350,7 @@ export async function updatePayment(
   if (input.reservation) {
     const reservation = await getReservationWithCampground(input.reservation);
     if (userRole === "manager") {
-      const campground = reservation.campground as { manager: mongoose.Types.ObjectId } | undefined;
+      const campground = (reservation.campground as any) as { manager: mongoose.Types.ObjectId } | undefined;
       if (!campground || String(campground.manager) !== userId) {
         throw Object.assign(new Error("Access denied. You can only assign payments to reservations on your own campgrounds."), {
           status: 403,

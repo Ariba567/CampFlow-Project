@@ -147,7 +147,7 @@ export async function listActivities(
 
   const [data, total] = await Promise.all([
     Activity.find(filters)
-      .sort(sort as mongoose.SortOrder)
+      .sort(sort as any)
       .skip(skip)
       .limit(options.limit)
       .populate("campground", "name slug address")
@@ -182,7 +182,7 @@ export async function getActivityById(
   }
 
   if (userRole === "manager") {
-    const campground = activity.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (activity.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only view activities for your own campgrounds."), {
         status: 403,
@@ -233,7 +233,7 @@ export async function updateActivity(
   }
 
   if (userRole === "manager") {
-    const campground = activity.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (activity.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only update activities for your own campgrounds."), {
         status: 403,
@@ -265,7 +265,7 @@ export async function deleteActivity(
   }
 
   if (userRole === "manager") {
-    const campground = activity.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (activity.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only delete activities for your own campgrounds."), {
         status: 403,

@@ -141,7 +141,7 @@ export async function listCampsites(
   const skip = (options.page - 1) * options.limit;
 
   const query = Campsite.find(filters)
-    .sort(sort as mongoose.SortOrder)
+      .sort(sort as any)
     .skip(skip)
     .limit(options.limit)
     .populate("campground", "name slug address city state country");
@@ -229,7 +229,7 @@ export async function updateCampsite(
   }
 
   if (userRole === "manager") {
-    const campground = campsite.campground as { manager: mongoose.Types.ObjectId };
+      const campground = (campsite.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only update your own campsites."), {
         status: 403,
@@ -271,7 +271,7 @@ export async function deleteCampsite(
   }
 
   if (userRole === "manager") {
-    const campground = campsite.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (campsite.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only delete your own campsites."), {
         status: 403,

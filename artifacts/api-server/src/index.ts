@@ -1,3 +1,8 @@
+import path from "node:path";
+import { config as dotenvConfig } from "dotenv";
+
+dotenvConfig({ path: path.resolve(process.cwd(), "../../.env") });
+
 import app from "./app";
 import { logger } from "./lib/logger";
 import { connectDB } from "./config/db";

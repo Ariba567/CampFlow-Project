@@ -1,3 +1,8 @@
+import path from "node:path";
+import { config as dotenvConfig } from "dotenv";
+
+dotenvConfig({ path: path.resolve(process.cwd(), "../../.env") });
+
 /**
  * Centralised environment configuration.
  * Validated at startup – the server will refuse to boot if required vars are missing.

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as paymentService from "../services/paymentService";
+import { UserRole } from "../models/User";
 
 export async function listPayments(req: Request, res: Response): Promise<void> {
   try {
@@ -26,7 +27,7 @@ export async function listPayments(req: Request, res: Response): Promise<void> {
 
 export async function getPayment(req: Request, res: Response): Promise<void> {
   try {
-    const payment = await paymentService.getPaymentById(req.params.id, req.user!.id, req.user!.role);
+    const payment = await paymentService.getPaymentById(String(req.params.id), req.user!.id, req.user!.role as UserRole);
     res.status(200).json({ data: payment });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };
@@ -36,7 +37,7 @@ export async function getPayment(req: Request, res: Response): Promise<void> {
 
 export async function createPayment(req: Request, res: Response): Promise<void> {
   try {
-    const created = await paymentService.createPayment(req.body, req.user!.id, req.user!.role);
+    const created = await paymentService.createPayment(req.body, req.user!.id, req.user!.role as UserRole);
     res.status(201).json({ message: "Payment created successfully.", data: created });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };
@@ -46,7 +47,7 @@ export async function createPayment(req: Request, res: Response): Promise<void> 
 
 export async function updatePayment(req: Request, res: Response): Promise<void> {
   try {
-    const updated = await paymentService.updatePayment(req.params.id, req.body, req.user!.id, req.user!.role);
+    const updated = await paymentService.updatePayment(String(req.params.id), req.body, req.user!.id, req.user!.role as UserRole);
     res.status(200).json({ message: "Payment updated successfully.", data: updated });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };
@@ -56,7 +57,7 @@ export async function updatePayment(req: Request, res: Response): Promise<void> 
 
 export async function deletePayment(req: Request, res: Response): Promise<void> {
   try {
-    await paymentService.deletePayment(req.params.id);
+    await paymentService.deletePayment(String(req.params.id));
     res.status(200).json({ message: "Payment deleted successfully." });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };

@@ -113,7 +113,7 @@ export async function listAdministrators(
 
   const [data, total] = await Promise.all([
     User.find(filters)
-      .sort(sort as mongoose.SortOrder)
+      .sort(sort as any)
       .skip(skip)
       .limit(options.limit)
       .exec(),

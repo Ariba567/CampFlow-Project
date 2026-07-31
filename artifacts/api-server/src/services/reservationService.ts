@@ -165,7 +165,7 @@ export async function listReservations(
   const skip = (options.page - 1) * options.limit;
 
   const query = Reservation.find(filters)
-    .sort(sort as mongoose.SortOrder)
+       .sort(sort as any)
     .skip(skip)
     .limit(options.limit)
     .populate("customer", "firstName lastName email")
@@ -206,7 +206,7 @@ export async function getReservationById(
   }
 
   if (userRole === "manager") {
-    const campground = reservation.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (reservation.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only view reservations for your own campgrounds."), {
         status: 403,
@@ -284,7 +284,7 @@ export async function updateReservation(
   }
 
   if (userRole === "manager") {
-    const campground = reservation.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (reservation.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only update reservations for your own campgrounds."), {
         status: 403,
@@ -328,7 +328,7 @@ export async function deleteReservation(
   }
 
   if (userRole === "manager") {
-    const campground = reservation.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (reservation.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only delete reservations for your own campgrounds."), {
         status: 403,

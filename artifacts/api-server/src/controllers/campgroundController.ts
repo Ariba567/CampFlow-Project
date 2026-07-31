@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as campgroundService from "../services/campgroundService";
+import { UserRole } from "../models/User";
 
 export async function listCampgrounds(req: Request, res: Response): Promise<void> {
   try {
@@ -18,7 +19,7 @@ export async function listCampgrounds(req: Request, res: Response): Promise<void
 
 export async function getCampground(req: Request, res: Response): Promise<void> {
   try {
-    const campground = await campgroundService.getCampgroundById(req.params.id);
+    const campground = await campgroundService.getCampgroundById(String(req.params.id));
     res.status(200).json({ data: campground });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };
@@ -39,10 +40,10 @@ export async function createCampground(req: Request, res: Response): Promise<voi
 export async function updateCampground(req: Request, res: Response): Promise<void> {
   try {
     const updated = await campgroundService.updateCampground(
-      req.params.id,
+      String(req.params.id),
       req.body,
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
     res.status(200).json({ message: "Campground updated successfully.", data: updated });
   } catch (err: unknown) {
@@ -53,7 +54,7 @@ export async function updateCampground(req: Request, res: Response): Promise<voi
 
 export async function deleteCampground(req: Request, res: Response): Promise<void> {
   try {
-    await campgroundService.deleteCampground(req.params.id, req.user!.id, req.user!.role);
+    await campgroundService.deleteCampground(String(req.params.id), req.user!.id, req.user!.role as UserRole);
     res.status(200).json({ message: "Campground deleted successfully." });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };

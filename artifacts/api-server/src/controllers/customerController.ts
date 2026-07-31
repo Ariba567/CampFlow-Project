@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import * as customerService from "../services/customerService";
+import { UserRole } from "../models/User";
 
 export async function listCustomers(req: Request, res: Response): Promise<void> {
   try {
     const result = await customerService.listCustomers(
       req.query as unknown as customerService.CustomerQueryOptions,
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
 
     res.status(200).json({
@@ -27,9 +28,9 @@ export async function listCustomers(req: Request, res: Response): Promise<void> 
 export async function getCustomer(req: Request, res: Response): Promise<void> {
   try {
     const customer = await customerService.getCustomerById(
-      req.params.id,
+      String(req.params.id),
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
 
     res.status(200).json({ data: customer });
@@ -41,7 +42,7 @@ export async function getCustomer(req: Request, res: Response): Promise<void> {
 
 export async function createCustomer(req: Request, res: Response): Promise<void> {
   try {
-    const created = await customerService.createCustomer(req.body, req.user!.role);
+    const created = await customerService.createCustomer(req.body, req.user!.role as UserRole);
     res.status(201).json({ message: "Customer created successfully.", data: created });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };
@@ -52,10 +53,10 @@ export async function createCustomer(req: Request, res: Response): Promise<void>
 export async function updateCustomer(req: Request, res: Response): Promise<void> {
   try {
     const updated = await customerService.updateCustomer(
-      req.params.id,
+      String(req.params.id),
       req.body,
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
     res.status(200).json({ message: "Customer updated successfully.", data: updated });
   } catch (err: unknown) {
@@ -66,7 +67,7 @@ export async function updateCustomer(req: Request, res: Response): Promise<void>
 
 export async function deleteCustomer(req: Request, res: Response): Promise<void> {
   try {
-    await customerService.deleteCustomer(req.params.id, req.user!.id, req.user!.role);
+    await customerService.deleteCustomer(String(req.params.id), req.user!.id, req.user!.role as UserRole);
     res.status(200).json({ message: "Customer deleted successfully." });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import Review, { IReview, ReservationStatus } from "../models/Review";
-import Reservation from "../models/Reservation";
+import Review, { IReview } from "../models/Review";
+import Reservation, { ReservationStatus } from "../models/Reservation";
 import Campground from "../models/Campground";
 import Campsite from "../models/Campsite";
 import { UserRole } from "../models/User";
@@ -147,7 +147,7 @@ export async function listReviews(
 
   const [data, total] = await Promise.all([
     Review.find(filters)
-      .sort(sort as mongoose.SortOrder)
+      .sort(sort as any)
       .skip(skip)
       .limit(options.limit)
       .populate("customer", "firstName lastName email")
@@ -192,7 +192,7 @@ export async function getReviewById(
   }
 
   if (userRole === "manager") {
-    const campground = review.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (review.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only view reviews for your own campgrounds."), {
         status: 403,
@@ -308,7 +308,7 @@ export async function updateReview(
   }
 
   if (userRole === "manager") {
-    const campground = review.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (review.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only update reviews for your own campgrounds."), {
         status: 403,
@@ -347,7 +347,7 @@ export async function deleteReview(
   }
 
   if (userRole === "manager") {
-    const campground = review.campground as { manager: mongoose.Types.ObjectId };
+    const campground = (review.campground as any) as { manager: mongoose.Types.ObjectId };
     if (!campground || String(campground.manager) !== userId) {
       throw Object.assign(new Error("Access denied. You can only delete reviews for your own campgrounds."), {
         status: 403,

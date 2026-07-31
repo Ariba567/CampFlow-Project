@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import * as managerService from "../services/managerService";
+import { UserRole } from "../models/User";
 
 export async function listManagers(req: Request, res: Response): Promise<void> {
   try {
     const result = await managerService.listManagers(
       req.query as unknown as managerService.ManagerQueryOptions,
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
 
     res.status(200).json({
@@ -27,9 +28,9 @@ export async function listManagers(req: Request, res: Response): Promise<void> {
 export async function getManager(req: Request, res: Response): Promise<void> {
   try {
     const manager = await managerService.getManagerById(
-      req.params.id,
+      String(req.params.id),
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
     res.status(200).json({ data: manager });
   } catch (err: unknown) {
@@ -40,7 +41,7 @@ export async function getManager(req: Request, res: Response): Promise<void> {
 
 export async function createManager(req: Request, res: Response): Promise<void> {
   try {
-    const created = await managerService.createManager(req.body, req.user!.role);
+    const created = await managerService.createManager(req.body, req.user!.role as UserRole);
     res.status(201).json({ message: "Manager created successfully.", data: created });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };
@@ -51,10 +52,10 @@ export async function createManager(req: Request, res: Response): Promise<void> 
 export async function updateManager(req: Request, res: Response): Promise<void> {
   try {
     const updated = await managerService.updateManager(
-      req.params.id,
+      String(req.params.id),
       req.body,
       req.user!.id,
-      req.user!.role,
+      req.user!.role as UserRole,
     );
     res.status(200).json({ message: "Manager updated successfully.", data: updated });
   } catch (err: unknown) {
@@ -65,7 +66,7 @@ export async function updateManager(req: Request, res: Response): Promise<void> 
 
 export async function deleteManager(req: Request, res: Response): Promise<void> {
   try {
-    await managerService.deleteManager(req.params.id, req.user!.id, req.user!.role);
+    await managerService.deleteManager(String(req.params.id), req.user!.id, req.user!.role as UserRole);
     res.status(200).json({ message: "Manager deleted successfully." });
   } catch (err: unknown) {
     const error = err as Error & { status?: number };

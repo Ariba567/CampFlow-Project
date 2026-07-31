@@ -139,7 +139,7 @@ export async function listNotifications(
 
   const [data, total] = await Promise.all([
     Notification.find(filters)
-      .sort(sort as mongoose.SortOrder)
+      .sort(sort as any)
       .skip(skip)
       .limit(options.limit)
       .populate("recipient", "firstName lastName email")
