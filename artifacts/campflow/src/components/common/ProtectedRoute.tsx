@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import type { UserRole } from "@/types";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ProtectedRouteProps {
   /** One or more roles allowed to access this route. Omit to allow any authenticated user. */
@@ -18,8 +19,7 @@ export default function ProtectedRoute({ roles }: ProtectedRouteProps) {
   const location = useLocation();
 
   if (isLoading) {
-    // Prevent premature redirect while session is being restored from storage
-    return null;
+    return <div className="grid min-h-[40vh] place-items-center"><Spinner className="size-6 text-primary" /></div>;
   }
 
   if (!isAuthenticated) {
@@ -27,6 +27,9 @@ export default function ProtectedRoute({ roles }: ProtectedRouteProps) {
   }
 
   if (roles && roles.length > 0 && user && !roles.includes(user.role)) {
+    if (roles.length === 1 && roles[0] === "customer" && (user.role === "manager" || user.role === "admin")) {
+      return <Navigate to="/dashboard/admin" replace />;
+    }
     return <Navigate to="/unauthorised" replace />;
   }
 

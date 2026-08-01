@@ -30,6 +30,15 @@ export async function getMe(): Promise<IUser> {
   return data.user;
 }
 
+export type ProfileUpdateInput = Pick<IUser, "firstName" | "lastName" | "email" | "phone"> & {
+  password?: string;
+};
+
+export async function updateProfile(userId: string, input: ProfileUpdateInput): Promise<IUser> {
+  const { data } = await api.patch<{ data: IUser }>(`/customers/${userId}`, input);
+  return data.data;
+}
+
 // ─── Refresh tokens ───────────────────────────────────────────────────────────
 export async function refreshTokens(): Promise<{ accessToken: string; refreshToken: string }> {
   const refreshToken = tokenStorage.getRefresh();
