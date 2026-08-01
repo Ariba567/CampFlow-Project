@@ -1,8 +1,16 @@
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Navbar() {
+  const { isAuthenticated, logout, user } = useAuth();
+  const navigate = useNavigate();
+  const signOut = async () => {
+    await logout();
+    navigate('/', { replace: true });
+  };
+
   return (
     <header className="border-b border-border bg-card/90 backdrop-blur-xl shadow-sm">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 md:px-6">
@@ -29,8 +37,13 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm">Sign in</Button>
-          <Button variant="default" size="sm">Get started</Button>
+          {isAuthenticated ? <>
+            <Button asChild variant="outline" size="sm"><Link to={user?.role === 'customer' ? '/dashboard/profile' : '/dashboard'}>My account</Link></Button>
+            <Button variant="default" size="sm" onClick={() => void signOut()}>Sign out</Button>
+          </> : <>
+            <Button asChild variant="outline" size="sm"><Link to="/login">Sign in</Link></Button>
+            <Button asChild variant="default" size="sm"><Link to="/register">Get started</Link></Button>
+          </>}
           <Button variant="ghost" size="icon" className="md:hidden">
             <Menu className="h-4 w-4" />
           </Button>
