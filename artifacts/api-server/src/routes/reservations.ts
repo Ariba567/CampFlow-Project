@@ -72,6 +72,12 @@ router.get("/:id", authenticate, validate(mongoIdSchema, "params"), reservationC
 
 router.post("/", authenticate, validate(createReservationSchema), reservationController.createReservation);
 router.patch(
+  "/:id/cancel",
+  authenticate,
+  validate(mongoIdSchema, "params"),
+  reservationController.cancelReservation,
+);
+router.patch(
   "/:id",
   authenticate,
   validate(mongoIdSchema, "params"),

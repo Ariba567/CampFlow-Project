@@ -60,6 +60,20 @@ export async function updateReservation(req: Request, res: Response): Promise<vo
   }
 }
 
+export async function cancelReservation(req: Request, res: Response): Promise<void> {
+  try {
+    const cancelled = await reservationService.cancelReservation(
+      String(req.params.id),
+      req.user!.id,
+      req.user!.role as UserRole,
+    );
+    res.status(200).json({ message: "Reservation cancelled successfully.", data: cancelled });
+  } catch (err: unknown) {
+    const error = err as Error & { status?: number };
+    res.status(error.status ?? 500).json({ error: error.message ?? "Failed to cancel reservation." });
+  }
+}
+
 export async function deleteReservation(req: Request, res: Response): Promise<void> {
   try {
     await reservationService.deleteReservation(String(req.params.id), req.user!.id, req.user!.role as UserRole);

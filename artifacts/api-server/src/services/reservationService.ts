@@ -308,6 +308,50 @@ export async function updateReservation(
   return reservation;
 }
 
+export async function cancelReservation(
+  id: string,
+  userId: string,
+  userRole: UserRole,
+): Promise<IReservation> {
+  const reservation = await Reservation.findById(id)
+    .populate("campground", "manager")
+    .populate("customer", "_id");
+
+  if (!reservation) {
+    throw Object.assign(new Error("Reservation not found."), { status: 404 });
+  }
+
+  if (userRole === "customer" && String(reservation.customer._id) !== userId) {
+    throw Object.assign(new Error("Access denied. You can only cancel your own reservations."), {
+      status: 403,
+    });
+  }
+
+  if (userRole === "manager") {
+    const campground = (reservation.campground as any) as { manager: mongoose.Types.ObjectId };
+    if (!campground || String(campground.manager) !== userId) {
+      throw Object.assign(new Error("Access denied. You can only cancel reservations for your own campgrounds."), {
+        status: 403,
+      });
+    }
+  }
+
+  if (reservation.status === "completed") {
+    throw Object.assign(new Error("Completed reservations cannot be cancelled."), { status: 400 });
+  }
+
+  if (reservation.status === "cancelled") {
+    throw Object.assign(new Error("This reservation has already been cancelled."), { status: 400 });
+  }
+
+  reservation.status = "cancelled";
+  reservation.cancelledAt = new Date();
+  reservation.cancelledBy = new mongoose.Types.ObjectId(userId);
+  await reservation.save();
+
+  return reservation;
+}
+
 export async function deleteReservation(
   id: string,
   userId: string,
