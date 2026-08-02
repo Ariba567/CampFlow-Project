@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, MapPin, Mountain, Sparkles, TentTree, Trees, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { usePageMetadata } from '@/hooks/usePageMetadata';
 
 const stays = [
   { title: 'RV sites', description: 'Pull-through and back-in sites with full hookups and room to settle in.', icon: Mountain },
@@ -12,12 +13,14 @@ const stays = [
 const locations = ['Pine Ridge, Colorado', 'Lake Haven, Michigan', 'Bluewater, Oregon', 'Cedar Creek, Tennessee'];
 
 export default function Home() {
+  usePageMetadata('Home — CampFlow', 'Discover CampFlow campgrounds, activities, and bookings for your next outdoor adventure.');
   return (
     <div className="space-y-20 pb-10 md:space-y-28">
       <section className="relative overflow-hidden rounded-3xl bg-primary px-6 py-16 text-primary-foreground shadow-xl md:px-12 md:py-24">
         <img
-          src="https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&w=1800&q=85"
+          src="https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&w=1800&q=70"
           alt="Family campsite among tall trees"
+          loading="lazy"
           className="absolute inset-0 h-full w-full object-cover opacity-35"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/85 to-primary/30" />
@@ -51,7 +54,7 @@ export default function Home() {
       </section>
 
       <section className="grid items-center gap-10 rounded-3xl bg-secondary/55 p-6 md:grid-cols-2 md:p-10">
-        <img src="https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=1100&q=85" alt="Sunlight through a forest" className="h-72 w-full rounded-2xl object-cover md:h-full" />
+        <img src="https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=1100&q=70" alt="Sunlight through a forest" loading="lazy" className="h-72 w-full rounded-2xl object-cover md:h-full" />
         <div className="max-w-xl py-2 md:px-4">
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Four places to gather</p>
           <h2 className="mt-3 font-serif text-4xl tracking-tight">A favorite spot is waiting.</h2>

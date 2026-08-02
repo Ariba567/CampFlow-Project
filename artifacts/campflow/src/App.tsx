@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
@@ -6,63 +7,64 @@ import Layout from '@/components/common/Layout';
 import PagePlaceholder from '@/components/common/PagePlaceholder';
 import { Toaster } from '@/components/ui/sonner';
 
-import Home from '@/pages/home';
-import Campgrounds from '@/pages/campgrounds';
-import CampgroundDetail from '@/pages/campground-detail';
-import CampsiteDetail from '@/pages/campsite-detail';
-import Pricing from '@/pages/pricing';
-import Activities from '@/pages/activities';
-import About from '@/pages/about';
-import Contact from '@/pages/contact';
-import FAQ from '@/pages/faq';
-import Amenities from '@/pages/amenities';
-import Gallery from '@/pages/gallery';
-import Login from '@/pages/login';
-import Register from '@/pages/register';
-import Reservation from '@/pages/reservation';
-import ReservationConfirmation from '@/pages/reservation-confirmation';
-import Categories from '@/pages/categories';
-import Dashboard from '@/pages/dashboard';
-import DashboardBookings from '@/pages/dashboard-bookings';
-import DashboardProfile from '@/pages/dashboard-profile';
-import DashboardReviews from '@/pages/dashboard-reviews';
-import DashboardAdmin from '@/pages/dashboard-admin';
-import DashboardAdminCampgrounds from '@/pages/dashboard-admin-campgrounds';
-import DashboardAdminReservations from '@/pages/dashboard-admin-reservations';
-import DashboardAdminPricing from '@/pages/dashboard-admin-pricing';
-import DashboardAdminUsers from '@/pages/dashboard-admin-users';
-import DashboardAdminAnalytics from '@/pages/dashboard-admin-analytics';
-import DashboardAdminCalendar from '@/pages/dashboard-admin-calendar';
-import DashboardAdminCampsites from '@/pages/dashboard-admin-campsites';
-import DashboardAdminCustomers from '@/pages/dashboard-admin-customers';
-import OperationsLayout from '@/components/operations/OperationsLayout';
+const Home = lazy(() => import('@/pages/home'));
+const Campgrounds = lazy(() => import('@/pages/campgrounds'));
+const CampgroundDetail = lazy(() => import('@/pages/campground-detail'));
+const CampsiteDetail = lazy(() => import('@/pages/campsite-detail'));
+const Pricing = lazy(() => import('@/pages/pricing'));
+const Activities = lazy(() => import('@/pages/activities'));
+const About = lazy(() => import('@/pages/about'));
+const Contact = lazy(() => import('@/pages/contact'));
+const FAQ = lazy(() => import('@/pages/faq'));
+const Amenities = lazy(() => import('@/pages/amenities'));
+const Gallery = lazy(() => import('@/pages/gallery'));
+const Login = lazy(() => import('@/pages/login'));
+const Register = lazy(() => import('@/pages/register'));
+const Reservation = lazy(() => import('@/pages/reservation'));
+const ReservationConfirmation = lazy(() => import('@/pages/reservation-confirmation'));
+const Categories = lazy(() => import('@/pages/categories'));
+const Dashboard = lazy(() => import('@/pages/dashboard'));
+const DashboardBookings = lazy(() => import('@/pages/dashboard-bookings'));
+const DashboardProfile = lazy(() => import('@/pages/dashboard-profile'));
+const DashboardReviews = lazy(() => import('@/pages/dashboard-reviews'));
+const DashboardAdmin = lazy(() => import('@/pages/dashboard-admin'));
+const DashboardAdminCampgrounds = lazy(() => import('@/pages/dashboard-admin-campgrounds'));
+const DashboardAdminReservations = lazy(() => import('@/pages/dashboard-admin-reservations'));
+const DashboardAdminPricing = lazy(() => import('@/pages/dashboard-admin-pricing'));
+const DashboardAdminUsers = lazy(() => import('@/pages/dashboard-admin-users'));
+const DashboardAdminAnalytics = lazy(() => import('@/pages/dashboard-admin-analytics'));
+const DashboardAdminCalendar = lazy(() => import('@/pages/dashboard-admin-calendar'));
+const DashboardAdminCampsites = lazy(() => import('@/pages/dashboard-admin-campsites'));
+const DashboardAdminCustomers = lazy(() => import('@/pages/dashboard-admin-customers'));
+const OperationsLayout = lazy(() => import('@/components/operations/OperationsLayout'));
 
 function Router() {
   const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
 
   return (
     <BrowserRouter basename={basename}>
-      <Routes>
-        <Route path="/" element={<Layout><Home /></Layout>} />
-        <Route path="/campgrounds" element={<Layout><Campgrounds /></Layout>} />
-        <Route path="/campgrounds/:slug" element={<Layout><CampgroundDetail /></Layout>} />
-        <Route path="/campgrounds/:slug/sites/:siteId" element={<Layout><CampsiteDetail /></Layout>} />
-        <Route path="/categories/:type" element={<Layout><Categories /></Layout>} />
-        <Route path="/pricing" element={<Layout><Pricing /></Layout>} />
-        <Route path="/activities" element={<Layout><Activities /></Layout>} />
-        <Route path="/amenities" element={<Layout><Amenities /></Layout>} />
-        <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
-        <Route path="/about" element={<Layout><About /></Layout>} />
-        <Route path="/contact" element={<Layout><Contact /></Layout>} />
-        <Route path="/faq" element={<Layout><FAQ /></Layout>} />
-        <Route
-          path="/unauthorised"
-          element={
-            <Layout>
-              <PagePlaceholder title="Unauthorised" subtitle="You do not have permission to access this page." actionLabel="Return home" />
-            </Layout>
-          }
-        />
+      <Suspense fallback={<div className="min-h-[50vh] px-4 py-20 text-center text-muted-foreground">Loading page…</div>}>
+        <Routes>
+          <Route path="/" element={<Layout><Home /></Layout>} />
+          <Route path="/campgrounds" element={<Layout><Campgrounds /></Layout>} />
+          <Route path="/campgrounds/:slug" element={<Layout><CampgroundDetail /></Layout>} />
+          <Route path="/campgrounds/:slug/sites/:siteId" element={<Layout><CampsiteDetail /></Layout>} />
+          <Route path="/categories/:type" element={<Layout><Categories /></Layout>} />
+          <Route path="/pricing" element={<Layout><Pricing /></Layout>} />
+          <Route path="/activities" element={<Layout><Activities /></Layout>} />
+          <Route path="/amenities" element={<Layout><Amenities /></Layout>} />
+          <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
+          <Route path="/about" element={<Layout><About /></Layout>} />
+          <Route path="/contact" element={<Layout><Contact /></Layout>} />
+          <Route path="/faq" element={<Layout><FAQ /></Layout>} />
+          <Route
+            path="/unauthorised"
+            element={
+              <Layout>
+                <PagePlaceholder title="Unauthorised" subtitle="You do not have permission to access this page." actionLabel="Return home" />
+              </Layout>
+            }
+          />
 
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<Layout><Login /></Layout>} />
@@ -102,6 +104,7 @@ function Router() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

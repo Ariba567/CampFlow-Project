@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Check, Sparkles } from 'lucide-react';
 import { listPricingRules, apiError, type ApiItem } from '@/services/customerDashboardService';
+import { usePageMetadata } from '@/hooks/usePageMetadata';
 
 const samplePrices = [
   { type: 'Tent site', regular: '$42', weekend: '$52', holiday: '$62', note: 'Up to 4 guests' },
@@ -12,6 +13,7 @@ const samplePrices = [
 ];
 
 export default function Pricing() {
+  usePageMetadata('Pricing — CampFlow', 'View current CampFlow pricing rules for seasonal, weekend, holiday, and promotional rates.');
   const [pricing, setPricing] = useState<ApiItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

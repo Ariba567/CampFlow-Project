@@ -1,16 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { listCampgrounds, type ApiItem } from '@/services/customerDashboardService';
 import { siteCategories, type SiteType } from '@/data/campgrounds';
+import { usePageMetadata } from '@/hooks/usePageMetadata';
 
 export default function Categories() {
   const { type } = useParams();
   const categoryType = type as SiteType | undefined;
   const category = categoryType ? siteCategories[categoryType] : undefined;
+  usePageMetadata(
+    category ? `${category.name} camping category — CampFlow` : 'Category not found — CampFlow',
+    category ? `Explore campgrounds offering ${category.name.toLowerCase()} stays at CampFlow.` : 'Category not found for CampFlow campsites.',
+  );
   const [campgrounds, setCampgrounds] = useState<ApiItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +48,7 @@ export default function Categories() {
       <section className="grid gap-6 md:grid-cols-2">
         {filteredCampgrounds.map((campground) => (
           <Card key={campground.slug} className="overflow-hidden">
-            <img src={campground.image} alt={campground.name} className="h-56 w-full object-cover" />
+            <img src={campground.image} alt={campground.name} loading="lazy" className="h-56 w-full object-cover" />
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -55,7 +60,7 @@ export default function Categories() {
               <p className="mt-5 leading-7 text-muted-foreground">{campground.shortDescription}</p>
               <div className="mt-6 flex justify-end">
                 <Button asChild variant="link" className="px-0">
-                  <a href={`/campgrounds/${campground.slug}`}>View details <ArrowRight /></a>
+                  <Link to={`/campgrounds/${campground.slug}`}>View details <ArrowRight /></Link>
                 </Button>
               </div>
             </CardContent>
