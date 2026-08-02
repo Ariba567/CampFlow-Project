@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button';
 interface ModalProps {
   title: string;
   description?: string;
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
   children: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export default function Modal({
@@ -20,10 +22,12 @@ export default function Modal({
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   onConfirm,
+  open,
+  onOpenChange,
 }: ModalProps) {
   return (
-    <Dialog>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

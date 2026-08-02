@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import ErrorState from '@/components/ui/error-state';
 import InvoiceDialog from '@/components/customer/InvoiceDialog';
+import Modal from '@/components/ui/modal';
 import ReservationStatus from '@/components/customer/ReservationStatus';
 import { addUiNotification, apiError, cancelReservation, idOf, labelOf, listReservations, updateReservation, type ApiItem } from '@/services/customerDashboardService';
 import { toast } from 'sonner';
@@ -22,6 +23,8 @@ export default function DashboardBookings() {
   const [edit, setEdit] = useState<ApiItem | null>(null);
   const [editDates, setEditDates] = useState({ checkIn: '', checkOut: '' });
   const [editError, setEditError] = useState<string | null>(null);
+  const [cancelModalReservation, setCancelModalReservation] = useState<ApiItem | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
   const load = () => { setLoading(true); listReservations().then((result) => setReservations(result.data)).catch((caught) => setError(apiError(caught, 'We could not load your bookings.'))).finally(() => setLoading(false)); };
   useEffect(load, []);
 
@@ -31,15 +34,24 @@ export default function DashboardBookings() {
     setEditError(null);
   };
 
-  const cancel = async (reservation: ApiItem) => {
-    if (!window.confirm('Cancel this reservation? It will remain in your booking history.')) return;
+  const requestCancel = (reservation: ApiItem) => {
+    setCancelModalReservation(reservation);
+  };
+
+  const confirmCancel = async () => {
+    if (!cancelModalReservation) return;
+
+    setIsCancelling(true);
     try {
-      await cancelReservation(idOf(reservation));
-      addUiNotification({ type: 'booking_cancellation', title: 'Reservation cancelled', message: `Your reservation at ${labelOf(reservation.campground, 'Green Valley')} was cancelled.` });
+      await cancelReservation(idOf(cancelModalReservation));
+      addUiNotification({ type: 'booking_cancellation', title: 'Reservation cancelled', message: `Your reservation at ${labelOf(cancelModalReservation.campground, 'Green Valley')} was cancelled.` });
       toast.success('Reservation cancelled');
       load();
+      setCancelModalReservation(null);
     } catch (caught) {
       setError(apiError(caught, 'We could not cancel this reservation.'));
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -81,7 +93,23 @@ export default function DashboardBookings() {
   const upcoming = reservations.filter((item) => new Date(item.checkIn) >= new Date() && item.status !== 'cancelled');
   const history = reservations.filter((item) => !upcoming.includes(item));
   const canManage = (reservation: ApiItem) => new Date(reservation.checkIn) >= new Date() && reservation.status !== 'cancelled' && reservation.status !== 'completed';
-  const group = (title: string, items: ApiItem[]) => <section><h2 className="font-serif text-3xl">{title}</h2>{items.length ? <div className="mt-5 grid gap-4">{items.map((reservation) => <Card key={idOf(reservation)}><CardContent className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex flex-wrap items-center gap-3"><h3 className="text-lg font-semibold">{labelOf(reservation.campground, 'Green Valley')}</h3><ReservationStatus status={reservation.status} /></div><p className="mt-2 text-sm text-muted-foreground">{dateOnly(reservation.checkIn)} — {dateOnly(reservation.checkOut)} · {labelOf(reservation.campsite, 'Campsite')}</p></div><div className="flex flex-wrap gap-2"><InvoiceDialog reservation={reservation} />{canManage(reservation) && <><Button variant="outline" size="sm" onClick={() => openEdit(reservation)}><Edit3 />Edit</Button><Button variant="outline" size="sm" onClick={() => void cancel(reservation)}><XCircle />Cancel</Button></>}</div></CardContent></Card>)}</div> : <Card className="mt-5"><CardContent className="p-8 text-center text-sm text-muted-foreground">No {title.toLowerCase()} yet.</CardContent></Card>}</section>;
+  const group = (title: string, items: ApiItem[]) => <section><h2 className="font-serif text-3xl">{title}</h2>{items.length ? <div className="mt-5 grid gap-4">{items.map((reservation) => <Card key={idOf(reservation)}><CardContent className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex flex-wrap items-center gap-3"><h3 className="text-lg font-semibold">{labelOf(reservation.campground, 'Green Valley')}</h3><ReservationStatus status={reservation.status} /></div><p className="mt-2 text-sm text-muted-foreground">{dateOnly(reservation.checkIn)} — {dateOnly(reservation.checkOut)} · {labelOf(reservation.campsite, 'Campsite')}</p></div><div className="flex flex-wrap gap-2"><InvoiceDialog reservation={reservation} />{canManage(reservation) && <><Button variant="outline" size="sm" onClick={() => openEdit(reservation)}><Edit3 />Edit</Button><Button variant="outline" size="sm" onClick={() => requestCancel(reservation)}><XCircle />Cancel</Button></>}</div></CardContent></Card>)}</div> : <Card className="mt-5"><CardContent className="p-8 text-center text-sm text-muted-foreground">No {title.toLowerCase()} yet.</CardContent></Card>}</section>;
 
-  return <div className="space-y-10 pb-10"><section><p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Your stays</p><h1 className="mt-3 font-serif text-5xl tracking-tight">Bookings</h1></section>{error && <ErrorState title="Bookings unavailable" message={error} />}{group('Upcoming reservations', upcoming)}{group('Booking history', history)}<Dialog open={!!edit} onOpenChange={(open) => !open && setEdit(null)}><DialogContent><DialogHeader><DialogTitle>Edit reservation dates</DialogTitle></DialogHeader>{edit && <form className="space-y-5" onSubmit={saveEdit}><div className="space-y-2"><Label htmlFor="edit-in">Arrival</Label><Input id="edit-in" name="checkIn" type="date" value={editDates.checkIn} onChange={(event) => { setEditDates((value) => ({ ...value, checkIn: event.target.value })); setEditError(null); }} required /></div><div className="space-y-2"><Label htmlFor="edit-out">Departure</Label><Input id="edit-out" name="checkOut" type="date" min={editDates.checkIn} value={editDates.checkOut} onChange={(event) => { setEditDates((value) => ({ ...value, checkOut: event.target.value })); setEditError(null); }} required /></div>{revisedNights > 0 && <div className="rounded-xl bg-secondary p-4 text-sm"><div className="flex justify-between"><span>{revisedNights} night{revisedNights === 1 ? '' : 's'}</span><span className="font-semibold">${revisedTotal.toFixed(2)}</span></div><p className="mt-1 text-muted-foreground">Updated total, including taxes and stored fees.</p></div>}{editError && <p className="text-sm text-destructive">{editError}</p>}<Button type="submit" disabled={revisedNights <= 0}>Save changes</Button></form>}</DialogContent></Dialog></div>;
+  return <div className="space-y-10 pb-10"><section><p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Your stays</p><h1 className="mt-3 font-serif text-5xl tracking-tight">Bookings</h1></section>{error && <ErrorState title="Bookings unavailable" message={error} />}{group('Upcoming reservations', upcoming)}{group('Booking history', history)}<Dialog open={!!edit} onOpenChange={(open) => !open && setEdit(null)}><DialogContent><DialogHeader><DialogTitle>Edit reservation dates</DialogTitle></DialogHeader>{edit && <form className="space-y-5" onSubmit={saveEdit}><div className="space-y-2"><Label htmlFor="edit-in">Arrival</Label><Input id="edit-in" name="checkIn" type="date" value={editDates.checkIn} onChange={(event) => { setEditDates((value) => ({ ...value, checkIn: event.target.value })); setEditError(null); }} required /></div><div className="space-y-2"><Label htmlFor="edit-out">Departure</Label><Input id="edit-out" name="checkOut" type="date" min={editDates.checkIn} value={editDates.checkOut} onChange={(event) => { setEditDates((value) => ({ ...value, checkOut: event.target.value })); setEditError(null); }} required /></div>{revisedNights > 0 && <div className="rounded-xl bg-secondary p-4 text-sm"><div className="flex justify-between"><span>{revisedNights} night{revisedNights === 1 ? '' : 's'}</span><span className="font-semibold">${revisedTotal.toFixed(2)}</span></div><p className="mt-1 text-muted-foreground">Updated total, including taxes and stored fees.</p></div>}{editError && <p className="text-sm text-destructive">{editError}</p>}<Button type="submit" disabled={revisedNights <= 0}>Save changes</Button></form>}</DialogContent></Dialog><Modal
+        title="Cancel reservation?"
+        description="Cancel this reservation? It will remain in your booking history."
+        open={!!cancelModalReservation}
+        onOpenChange={(open) => {
+          if (!open) setCancelModalReservation(null);
+        }}
+        onConfirm={confirmCancel}
+        confirmLabel={isCancelling ? 'Cancelling...' : 'Cancel reservation'}
+        cancelLabel="Keep reservation"
+      >
+        <p className="text-sm text-muted-foreground">
+          {cancelModalReservation
+            ? `Your reservation at ${labelOf(cancelModalReservation.campground, 'Green Valley')} will remain in your booking history after cancellation.`
+            : 'Confirm cancellation of the selected reservation.'}
+        </p>
+      </Modal></div>;
 }
