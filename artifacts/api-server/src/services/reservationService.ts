@@ -217,6 +217,36 @@ export async function getReservationById(
   return reservation;
 }
 
+async function ensureReservationDoesNotOverlap(
+  campsiteId: string,
+  checkIn: Date,
+  checkOut: Date,
+  excludeReservationId?: string,
+): Promise<void> {
+  if (!mongoose.isValidObjectId(campsiteId)) {
+    throw Object.assign(new Error("Invalid campsite ID."), { status: 400 });
+  }
+
+  const filters: Record<string, unknown> = {
+    campsite: new mongoose.Types.ObjectId(campsiteId),
+    status: { $ne: "cancelled" },
+    checkIn: { $lt: checkOut },
+    checkOut: { $gt: checkIn },
+  };
+
+  if (excludeReservationId && mongoose.isValidObjectId(excludeReservationId)) {
+    filters._id = { $ne: new mongoose.Types.ObjectId(excludeReservationId) };
+  }
+
+  const conflict = await Reservation.findOne(filters).select("checkIn checkOut reservationNumber status").exec();
+  if (conflict) {
+    throw Object.assign(
+      new Error("The selected campsite is already booked for the requested dates."),
+      { status: 409 },
+    );
+  }
+}
+
 async function ensureCampsiteAndCampgroundMatch(
   campsiteId: string,
   campgroundId: string,
@@ -257,6 +287,8 @@ export async function createReservation(
     await ensureManagerOwnsCampground(userId, input.campground);
   }
 
+  await ensureReservationDoesNotOverlap(input.campsite, input.checkIn, input.checkOut);
+
   return Reservation.create({
     ...input,
     customer: new mongoose.Types.ObjectId(userId),
@@ -292,10 +324,14 @@ export async function updateReservation(
     }
   }
 
-  if (input.campsite || input.campground) {
+  if (input.campsite || input.campground || input.checkIn || input.checkOut) {
     const campsiteId = input.campsite ? input.campsite : String(reservation.campsite);
     const campgroundId = input.campground ? input.campground : String(reservation.campground);
+    const checkIn = input.checkIn ? input.checkIn : reservation.checkIn;
+    const checkOut = input.checkOut ? input.checkOut : reservation.checkOut;
+
     await ensureCampsiteAndCampgroundMatch(campsiteId, campgroundId);
+    await ensureReservationDoesNotOverlap(campsiteId, checkIn, checkOut, id);
   }
 
   if (userRole === "manager" && input.campground) {

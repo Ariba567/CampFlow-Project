@@ -13,6 +13,8 @@ import customerRouter from "./customers";
 import managerRouter from "./managers";
 import administratorRouter from "./administrators";
 import dashboardRouter from "./dashboard";
+import contactRouter from "./contact";
+import userRouter from "./users";
 
 const router: IRouter = Router();
 
@@ -30,5 +32,7 @@ router.use("/customers", customerRouter);
 router.use("/managers", managerRouter);
 router.use("/administrators", administratorRouter);
 router.use("/dashboard", dashboardRouter);
+router.use("/contact", contactRouter);
+router.use("/users", userRouter);
 
 export default router;

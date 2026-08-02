@@ -3,7 +3,7 @@ import { z } from "zod";
 import * as dashboardController from "../controllers/dashboardController";
 import { authenticate } from "../middleware/authenticate";
 import { authorize } from "../middleware/authorize";
-import { validate } from "../middleware/validate";
+import { validate, mongoIdSchema } from "../middleware/validate";
 
 const router = express.Router();
 
@@ -25,6 +25,8 @@ router.get("/customer/summary", authenticate, authorize("customer"), dashboardCo
 router.get("/customer/profile", authenticate, authorize("customer"), dashboardController.customerProfile);
 router.get("/customer/reservations", authenticate, authorize("customer"), validate(paginationSchema), dashboardController.customerReservations);
 router.get("/customer/favorites", authenticate, authorize("customer"), validate(paginationSchema), dashboardController.customerFavorites);
+router.post("/customer/favorites/:id", authenticate, authorize("customer"), validate(mongoIdSchema, "params"), dashboardController.addCustomerFavorite);
+router.delete("/customer/favorites/:id", authenticate, authorize("customer"), validate(mongoIdSchema, "params"), dashboardController.removeCustomerFavorite);
 router.get("/customer/activities", authenticate, authorize("customer"), validate(paginationSchema), dashboardController.customerActivities);
 router.get("/customer/notifications", authenticate, authorize("customer"), validate(paginationSchema), dashboardController.customerNotifications);
 router.get("/customer/payments", authenticate, authorize("customer"), validate(paginationSchema), dashboardController.customerPayments);

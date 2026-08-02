@@ -31,7 +31,11 @@ export function validate(schema: ZodSchema, part: RequestPart = "body") {
     }
 
     // Replace with parsed output (handles defaults, coercion, strip unknown)
-    (req as Request & Record<string, unknown>)[part] = result.data;
+    if (part === "query") {
+      Object.assign(req.query, result.data);
+    } else {
+      (req as Request & Record<string, unknown>)[part] = result.data;
+    }
     next();
   };
 }

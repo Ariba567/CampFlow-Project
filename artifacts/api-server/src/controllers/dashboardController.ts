@@ -52,6 +52,26 @@ export async function customerFavorites(req: Request, res: Response): Promise<vo
   }
 }
 
+export async function addCustomerFavorite(req: Request, res: Response): Promise<void> {
+  try {
+    await dashboardService.addCustomerFavorite(req.user!.id, String(req.params.id));
+    res.status(200).json({ message: "Campsite added to favorites." });
+  } catch (err: unknown) {
+    const error = err as Error & { status?: number };
+    res.status(error.status ?? 500).json({ error: error.message ?? "Failed to add favorite." });
+  }
+}
+
+export async function removeCustomerFavorite(req: Request, res: Response): Promise<void> {
+  try {
+    await dashboardService.removeCustomerFavorite(req.user!.id, String(req.params.id));
+    res.status(200).json({ message: "Campsite removed from favorites." });
+  } catch (err: unknown) {
+    const error = err as Error & { status?: number };
+    res.status(error.status ?? 500).json({ error: error.message ?? "Failed to remove favorite." });
+  }
+}
+
 export async function customerActivities(req: Request, res: Response): Promise<void> {
   try {
     const q = req.query as unknown as any;

@@ -65,6 +65,47 @@ export async function listCustomerFavorites(userId: string, options: { page: num
   return { data: items, total: user.favorites.length, page: options.page, limit: options.limit, totalPages: Math.max(Math.ceil((user.favorites.length || 0) / options.limit), 1) };
 }
 
+export async function addCustomerFavorite(userId: string, campsiteId: string) {
+  if (!mongoose.isValidObjectId(campsiteId)) {
+    throw Object.assign(new Error("Invalid campsite ID."), { status: 400 });
+  }
+
+  const campsite = await Campsite.findById(campsiteId).select("_id").exec();
+  if (!campsite) {
+    throw Object.assign(new Error("Campsite not found."), { status: 404 });
+  }
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { $addToSet: { favorites: campsite._id } },
+    { new: true },
+  ).exec();
+
+  if (!user) {
+    throw Object.assign(new Error("User not found."), { status: 404 });
+  }
+
+  return user;
+}
+
+export async function removeCustomerFavorite(userId: string, campsiteId: string) {
+  if (!mongoose.isValidObjectId(campsiteId)) {
+    throw Object.assign(new Error("Invalid campsite ID."), { status: 400 });
+  }
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { $pull: { favorites: new mongoose.Types.ObjectId(campsiteId) } },
+    { new: true },
+  ).exec();
+
+  if (!user) {
+    throw Object.assign(new Error("User not found."), { status: 404 });
+  }
+
+  return user;
+}
+
 export async function listCustomerActivities(userId: string, options: { page: number; limit: number; }) {
   const reservations = await Reservation.find({ customer: userId }).select("_id");
   const reservationIds = reservations.map((r) => r._id);
