@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { createContact, apiError } from '@/services/customerDashboardService';
+import { usePageMetadata } from '@/hooks/usePageMetadata';
 
 export default function Contact() {
+  usePageMetadata('Contact — CampFlow', 'Reach out to the Green Valley camping team with questions about reservations, groups, and locations.');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);

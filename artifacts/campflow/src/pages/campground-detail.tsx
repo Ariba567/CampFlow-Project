@@ -8,6 +8,7 @@ import CampsiteCategories from '@/components/campgrounds/CampsiteCategories';
 import InteractiveCampMap from '@/components/campgrounds/InteractiveCampMap';
 import { listCampgrounds, listCampsites, listFavorites, addFavorite, removeFavorite, type ApiItem } from '@/services/customerDashboardService';
 import { useAuth } from '@/context/AuthContext';
+import { usePageMetadata } from '@/hooks/usePageMetadata';
 
 export default function CampgroundDetail() {
   const { slug } = useParams();
@@ -23,6 +24,11 @@ export default function CampgroundDetail() {
   const campground = useMemo(
     () => campgrounds.find((item) => item.slug === slug),
     [campgrounds, slug],
+  );
+
+  usePageMetadata(
+    campground ? `${campground.name} — CampFlow` : 'Campground details — CampFlow',
+    'Explore campground details, site availability, and amenities for your next stay.',
   );
 
   useEffect(() => {

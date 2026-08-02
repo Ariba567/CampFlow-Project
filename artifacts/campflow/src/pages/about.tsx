@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Leaf, ShieldCheck, Trees } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { usePageMetadata } from '@/hooks/usePageMetadata';
 
 const values = [
   { title: 'Nature first', body: 'We care for the trails, trees, and waterways that make every stay special.', icon: Leaf },
@@ -10,6 +11,7 @@ const values = [
 ];
 
 export default function About() {
+  usePageMetadata('About — CampFlow', 'Learn how Green Valley campgrounds make outdoor stays easier, more comfortable, and more memorable.');
   return (
     <div className="space-y-20 pb-10 md:space-y-28">
       <section className="grid items-center gap-10 md:grid-cols-2 md:gap-14">

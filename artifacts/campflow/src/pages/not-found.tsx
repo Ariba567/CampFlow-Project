@@ -1,7 +1,9 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
+import { usePageMetadata } from '@/hooks/usePageMetadata';
 
 export default function NotFound() {
+  usePageMetadata('404 Not Found — CampFlow', 'The page you were looking for could not be found in the CampFlow site.');
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md mx-4">

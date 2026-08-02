@@ -3,6 +3,7 @@ import { MessageCircle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { usePageMetadata } from '@/hooks/usePageMetadata';
 
 const questions = [
   ['When can I check in and check out?', 'RV and tent-site check-in begins at 2 p.m.; cabins and glamping tents are ready from 4 p.m. Check-out is 11 a.m. Please contact your campground if you need to arrange a different time.'],
@@ -14,6 +15,7 @@ const questions = [
 ];
 
 export default function FAQ() {
+  usePageMetadata('FAQ — CampFlow', 'Find answers to common questions about reservations, pets, check-in, and campground policies.');
   return (
     <div className="pb-10">
       <section className="mx-auto max-w-3xl text-center">
