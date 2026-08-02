@@ -4,10 +4,15 @@ import { UserRole } from "../models/User";
 
 export async function listPricing(req: Request, res: Response): Promise<void> {
   try {
+    const query = { ...req.query } as unknown as pricingService.PricingQueryOptions;
+    if (!req.user) {
+      query.isActive = true;
+    }
+
     const result = await pricingService.listPricing(
-      req.query as unknown as pricingService.PricingQueryOptions,
-      req.user!.id,
-      req.user!.role,
+      query,
+      req.user?.id,
+      req.user?.role,
     );
     res.status(200).json({ data: result.data, meta: {
       total: result.total,

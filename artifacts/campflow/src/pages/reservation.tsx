@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { CalendarDays, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,11 +13,57 @@ import { addUiNotification, apiError, createReservation, idOf, listCampgrounds, 
 
 type Values = { campground: string; campsite: string; checkIn: string; checkOut: string; adults: number; children: number; vehicles: number; specialRequests: string };
 export default function Reservation() {
-  const navigate = useNavigate(); const form = useForm<Values>({ defaultValues: { campground: '', campsite: '', checkIn: '', checkOut: '', adults: 2, children: 0, vehicles: 1, specialRequests: '' } });
-  const [campgrounds, setCampgrounds] = useState<ApiItem[]>([]); const [sites, setSites] = useState<ApiItem[]>([]); const [loading, setLoading] = useState(true); const [checking, setChecking] = useState(false); const [error, setError] = useState<string | null>(null); const selectedCampground = form.watch('campground'); const selectedSiteId = form.watch('campsite'); const checkIn = form.watch('checkIn'); const checkOut = form.watch('checkOut');
-  const selectedSite = sites.find((site) => idOf(site) === selectedSiteId); const nights = useMemo(() => { const start = new Date(checkIn); const end = new Date(checkOut); return checkIn && checkOut && end > start ? Math.ceil((end.getTime() - start.getTime()) / 86400000) : 0; }, [checkIn, checkOut]); const total = nights * Number(selectedSite?.basePrice ?? 0);
-  useEffect(() => { listCampgrounds().then(setCampgrounds).catch((caught) => setError(apiError(caught, 'We could not load campgrounds.'))).finally(() => setLoading(false)); }, []);
-  useEffect(() => { if (!selectedCampground) { setSites([]); return; } form.setValue('campsite', ''); setChecking(true); listCampsites(selectedCampground).then(setSites).catch((caught) => setError(apiError(caught, 'We could not check campsite availability.'))).finally(() => setChecking(false)); }, [selectedCampground, form]);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preferredCampground = searchParams.get('campground') ?? '';
+  const preferredSite = searchParams.get('preferredSite') ?? '';
+  const form = useForm<Values>({ defaultValues: { campground: '', campsite: '', checkIn: '', checkOut: '', adults: 2, children: 0, vehicles: 1, specialRequests: '' } });
+  const [campgrounds, setCampgrounds] = useState<ApiItem[]>([]);
+  const [sites, setSites] = useState<ApiItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const selectedCampground = form.watch('campground');
+  const selectedSiteId = form.watch('campsite');
+  const checkIn = form.watch('checkIn');
+  const checkOut = form.watch('checkOut');
+  const selectedSite = sites.find((site) => idOf(site) === selectedSiteId);
+  const nights = useMemo(() => {
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    return checkIn && checkOut && end > start ? Math.ceil((end.getTime() - start.getTime()) / 86400000) : 0;
+  }, [checkIn, checkOut]);
+  const total = nights * Number(selectedSite?.basePrice ?? 0);
+  useEffect(() => {
+    listCampgrounds()
+      .then((campgroundsData) => {
+        setCampgrounds(campgroundsData);
+        if (preferredCampground && campgroundsData.some((campground) => String(campground._id ?? campground.id) === preferredCampground)) {
+          form.setValue('campground', preferredCampground);
+        }
+      })
+      .catch((caught) => setError(apiError(caught, 'We could not load campgrounds.')))
+      .finally(() => setLoading(false));
+  }, [form, preferredCampground]);
+
+  useEffect(() => {
+    if (!selectedCampground) {
+      setSites([]);
+      return;
+    }
+
+    form.setValue('campsite', '');
+    setChecking(true);
+    listCampsites(selectedCampground)
+      .then((result) => {
+        setSites(result);
+        if (preferredSite && result.some((site) => String(site._id ?? site.id) === preferredSite)) {
+          form.setValue('campsite', preferredSite);
+        }
+      })
+      .catch((caught) => setError(apiError(caught, 'We could not check campsite availability.')))
+      .finally(() => setChecking(false));
+  }, [form, preferredCampground, preferredSite, selectedCampground]);
   const checkAvailability = async () => { if (!selectedCampground) { form.setError('campground', { message: 'Choose a campground first' }); return; } setChecking(true); try { setSites(await listCampsites(selectedCampground)); } catch (caught) { setError(apiError(caught, 'We could not check campsite availability.')); } finally { setChecking(false); } };
   const submit = async (values: Values) => { if (!selectedSite || !nights) { if (!nights) form.setError('checkOut', { message: 'Departure must be after arrival' }); return; } setError(null); try { const taxes = Math.round(total * 0.1 * 100) / 100; const reservation = await createReservation({ campground: values.campground, campsite: values.campsite, checkIn: values.checkIn, checkOut: values.checkOut, guests: { adults: Number(values.adults), children: Number(values.children), vehicles: Number(values.vehicles) }, specialRequests: values.specialRequests || undefined, pricing: { baseRate: Number(selectedSite.basePrice), nights, subtotal: total, taxes, fees: 0, discount: 0, total: total + taxes } }); addUiNotification({ type: 'booking_confirmation', title: 'Booking confirmed', message: `Your stay from ${values.checkIn} to ${values.checkOut} is confirmed.` }); navigate(`/reservation/confirmation/${idOf(reservation)}`, { replace: true }); } catch (caught) { setError(apiError(caught, 'We could not create your reservation.')); } };
   if (loading) return <div className="grid min-h-[50vh] place-items-center"><Spinner className="size-7 text-primary" /></div>;

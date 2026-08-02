@@ -21,6 +21,7 @@ import Login from '@/pages/login';
 import Register from '@/pages/register';
 import Reservation from '@/pages/reservation';
 import ReservationConfirmation from '@/pages/reservation-confirmation';
+import Categories from '@/pages/categories';
 import Dashboard from '@/pages/dashboard';
 import DashboardBookings from '@/pages/dashboard-bookings';
 import DashboardProfile from '@/pages/dashboard-profile';
@@ -31,6 +32,10 @@ import DashboardAdminReservations from '@/pages/dashboard-admin-reservations';
 import DashboardAdminPricing from '@/pages/dashboard-admin-pricing';
 import DashboardAdminUsers from '@/pages/dashboard-admin-users';
 import DashboardAdminAnalytics from '@/pages/dashboard-admin-analytics';
+import DashboardAdminCalendar from '@/pages/dashboard-admin-calendar';
+import DashboardAdminCampsites from '@/pages/dashboard-admin-campsites';
+import DashboardAdminCustomers from '@/pages/dashboard-admin-customers';
+import OperationsLayout from '@/components/operations/OperationsLayout';
 
 function Router() {
   const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
@@ -42,6 +47,7 @@ function Router() {
         <Route path="/campgrounds" element={<Layout><Campgrounds /></Layout>} />
         <Route path="/campgrounds/:slug" element={<Layout><CampgroundDetail /></Layout>} />
         <Route path="/campgrounds/:slug/sites/:siteId" element={<Layout><CampsiteDetail /></Layout>} />
+        <Route path="/categories/:type" element={<Layout><Categories /></Layout>} />
         <Route path="/pricing" element={<Layout><Pricing /></Layout>} />
         <Route path="/activities" element={<Layout><Activities /></Layout>} />
         <Route path="/amenities" element={<Layout><Amenities /></Layout>} />
@@ -76,15 +82,22 @@ function Router() {
         </Route>
 
         <Route element={<ProtectedRoute roles={['manager', 'admin']} />}>
-          <Route path="/dashboard/admin" element={<Layout><DashboardAdmin /></Layout>} />
-          <Route path="/dashboard/admin/campgrounds" element={<Layout><DashboardAdminCampgrounds /></Layout>} />
-          <Route path="/dashboard/admin/reservations" element={<Layout><DashboardAdminReservations /></Layout>} />
-          <Route path="/dashboard/admin/pricing" element={<Layout><DashboardAdminPricing /></Layout>} />
+          <Route element={<OperationsLayout />}>
+            <Route path="/dashboard/admin" element={<DashboardAdmin />} />
+            <Route path="/dashboard/admin/reservations" element={<DashboardAdminReservations />} />
+            <Route path="/dashboard/admin/calendar" element={<DashboardAdminCalendar />} />
+            <Route path="/dashboard/admin/campsites" element={<DashboardAdminCampsites />} />
+            <Route path="/dashboard/admin/customers" element={<DashboardAdminCustomers />} />
+            <Route path="/dashboard/admin/pricing" element={<DashboardAdminPricing />} />
+          </Route>
         </Route>
 
         <Route element={<ProtectedRoute roles={['admin']} />}>
-          <Route path="/dashboard/admin/users" element={<Layout><DashboardAdminUsers /></Layout>} />
-          <Route path="/dashboard/admin/analytics" element={<Layout><DashboardAdminAnalytics /></Layout>} />
+          <Route element={<OperationsLayout />}>
+            <Route path="/dashboard/admin/campgrounds" element={<DashboardAdminCampgrounds />} />
+            <Route path="/dashboard/admin/users" element={<DashboardAdminUsers />} />
+            <Route path="/dashboard/admin/analytics" element={<DashboardAdminAnalytics />} />
+          </Route>
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

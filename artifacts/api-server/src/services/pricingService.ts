@@ -141,12 +141,16 @@ async function validateCampsiteBelongsToCampground(campsiteId: string, campgroun
 
 export async function listPricing(
   options: PricingQueryOptions,
-  userId: string,
-  userRole: UserRole,
+  userId?: string,
+  userRole?: UserRole,
 ): Promise<PaginatedResult<IPricing>> {
   const filters = buildFilters(options);
 
   if (userRole === "manager") {
+    if (!userId) {
+      throw Object.assign(new Error("Access denied. User credentials are required for manager access."), { status: 403 });
+    }
+
     const ownedCampgrounds = await getManagerCampgroundIds(userId);
     if (ownedCampgrounds.length === 0) {
       return { data: [], total: 0, page: options.page, limit: options.limit, totalPages: 1 };

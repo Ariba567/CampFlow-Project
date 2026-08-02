@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { authenticate } from "../middleware/authenticate";
+import { authenticate, optionalAuthenticate } from "../middleware/authenticate";
 import { authorize } from "../middleware/authorize";
 import { validate, mongoIdSchema, paginationSchema } from "../middleware/validate";
 import * as pricingController from "../controllers/pricingController";
@@ -49,7 +49,7 @@ const pricingListSchema = paginationSchema.extend({
   order: z.enum(["asc", "desc"]).default("desc"),
 });
 
-router.get("/", authenticate, validate(pricingListSchema, "query"), pricingController.listPricing);
+router.get("/", optionalAuthenticate, validate(pricingListSchema, "query"), pricingController.listPricing);
 router.get("/:id", authenticate, validate(mongoIdSchema, "params"), pricingController.getPricing);
 
 router.post(
