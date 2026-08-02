@@ -67,23 +67,31 @@ const reservationListSchema = paginationSchema.extend({
   order: z.enum(["asc", "desc"]).default("desc"),
 });
 
-router.get("/", authenticate, validate(reservationListSchema, "query"), reservationController.listReservations);
-router.get("/:id", authenticate, validate(mongoIdSchema, "params"), reservationController.getReservation);
+router.get("/", authenticate, authorize("customer", "manager", "admin"), validate(reservationListSchema, "query"), reservationController.listReservations);
+router.get("/:id", authenticate, authorize("customer", "manager", "admin"), validate(mongoIdSchema, "params"), reservationController.getReservation);
 
-router.post("/", authenticate, validate(createReservationSchema), reservationController.createReservation);
+router.post("/", authenticate, authorize("customer", "manager", "admin"), validate(createReservationSchema), reservationController.createReservation);
 router.patch(
   "/:id/cancel",
   authenticate,
+  authorize("customer", "manager", "admin"),
   validate(mongoIdSchema, "params"),
   reservationController.cancelReservation,
 );
 router.patch(
   "/:id",
   authenticate,
+  authorize("customer", "manager", "admin"),
   validate(mongoIdSchema, "params"),
   validate(updateReservationSchema),
   reservationController.updateReservation,
 );
-router.delete("/:id", authenticate, validate(mongoIdSchema, "params"), reservationController.deleteReservation);
+router.delete(
+  "/:id",
+  authenticate,
+  authorize("customer", "manager", "admin"),
+  validate(mongoIdSchema, "params"),
+  reservationController.deleteReservation,
+);
 
 export default router;

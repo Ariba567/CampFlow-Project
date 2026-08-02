@@ -54,8 +54,8 @@ const paymentListSchema = paginationSchema.extend({
   order: z.enum(["asc", "desc"]).default("desc"),
 });
 
-router.get("/", authenticate, validate(paymentListSchema, "query"), paymentController.listPayments);
-router.get("/:id", authenticate, validate(mongoIdSchema, "params"), paymentController.getPayment);
+router.get("/", authenticate, authorize("customer", "manager", "admin"), validate(paymentListSchema, "query"), paymentController.listPayments);
+router.get("/:id", authenticate, authorize("customer", "manager", "admin"), validate(mongoIdSchema, "params"), paymentController.getPayment);
 
 router.post(
   "/",

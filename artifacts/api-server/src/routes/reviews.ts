@@ -58,17 +58,24 @@ const reviewListSchema = paginationSchema.extend({
   order: z.enum(["asc", "desc"]).default("desc"),
 });
 
-router.get("/", authenticate, validate(reviewListSchema, "query"), reviewController.listReviews);
-router.get("/:id", authenticate, validate(mongoIdSchema, "params"), reviewController.getReview);
+router.get("/", authenticate, authorize("customer", "manager", "admin"), validate(reviewListSchema, "query"), reviewController.listReviews);
+router.get("/:id", authenticate, authorize("customer", "manager", "admin"), validate(mongoIdSchema, "params"), reviewController.getReview);
 
-router.post("/", authenticate, validate(createReviewSchema), reviewController.createReview);
+router.post("/", authenticate, authorize("customer", "manager", "admin"), validate(createReviewSchema), reviewController.createReview);
 router.patch(
   "/:id",
   authenticate,
+  authorize("customer", "manager", "admin"),
   validate(mongoIdSchema, "params"),
   validate(updateReviewSchema),
   reviewController.updateReview,
 );
-router.delete("/:id", authenticate, validate(mongoIdSchema, "params"), reviewController.deleteReview);
+router.delete(
+  "/:id",
+  authenticate,
+  authorize("customer", "manager", "admin"),
+  validate(mongoIdSchema, "params"),
+  reviewController.deleteReview,
+);
 
 export default router;

@@ -81,8 +81,8 @@ const notificationListSchema = paginationSchema.extend({
   order: z.enum(["asc", "desc"]).default("desc"),
 });
 
-router.get("/", authenticate, validate(notificationListSchema, "query"), notificationController.listNotifications);
-router.get("/:id", authenticate, validate(mongoIdSchema, "params"), notificationController.getNotification);
+router.get("/", authenticate, authorize("customer", "manager", "admin"), validate(notificationListSchema, "query"), notificationController.listNotifications);
+router.get("/:id", authenticate, authorize("customer", "manager", "admin"), validate(mongoIdSchema, "params"), notificationController.getNotification);
 
 router.post(
   "/",
@@ -95,6 +95,7 @@ router.post(
 router.patch(
   "/:id",
   authenticate,
+  authorize("customer", "manager", "admin"),
   validate(mongoIdSchema, "params"),
   validate(updateNotificationSchema),
   notificationController.updateNotification,
@@ -103,6 +104,7 @@ router.patch(
 router.delete(
   "/:id",
   authenticate,
+  authorize("customer", "manager", "admin"),
   validate(mongoIdSchema, "params"),
   notificationController.deleteNotification,
 );

@@ -36,13 +36,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
         return;
       }
+
       try {
         const currentUser = await authService.getMe();
         setUser(currentUser);
       } catch {
-        // Token is invalid or expired; clear and continue as guest
-        tokenStorage.clear();
-        setUser(null);
+        const refreshToken = tokenStorage.getRefresh();
+        if (!refreshToken) {
+          tokenStorage.clear();
+          setUser(null);
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          await authService.refreshTokens();
+          const currentUser = await authService.getMe();
+          setUser(currentUser);
+        } catch {
+          tokenStorage.clear();
+          setUser(null);
+        }
       } finally {
         setIsLoading(false);
       }
