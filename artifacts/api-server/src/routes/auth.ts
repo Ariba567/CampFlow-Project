@@ -32,11 +32,10 @@ const registerSchema = z.object({
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
       "Password must contain at least one uppercase letter, one lowercase letter, and one number",
     ),
-  phone: z
-    .string()
-    .trim()
-    .regex(/^\+?[\d\s\-().]{7,20}$/, "Please provide a valid phone number")
-    .optional(),
+  phone: z.preprocess(
+    (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
+    z.string().trim().regex(/^\+?[\d\s\-().]{7,20}$/, "Please provide a valid phone number").optional(),
+  ),
 });
 
 const loginSchema = z.object({
