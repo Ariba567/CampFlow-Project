@@ -1,5 +1,23 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
 
+interface ICounter extends Document<string> {
+  _id: string;
+  seq: number;
+}
+
+const counterSchema = new Schema<ICounter>(
+  {
+    _id: { type: String, required: true },
+    seq: { type: Number, default: 0 },
+  },
+  { versionKey: false },
+);
+
+const Counter: Model<ICounter> = (mongoose.models.Counter as Model<ICounter>) || mongoose.model<ICounter>(
+  "Counter",
+  counterSchema,
+);
+
 // ─── Main document interface ──────────────────────────────────────────────────
 export type ReservationStatus =
   | "pending"
@@ -131,8 +149,19 @@ reservationSchema.pre("save", async function (next) {
   if (this.isNew && !this.reservationNumber) {
     const date = new Date();
     const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
-    const count = await mongoose.model("Reservation").countDocuments();
-    this.reservationNumber = `CF-${dateStr}-${String(count + 1).padStart(4, "0")}`;
+    const counterId = `reservation_${dateStr}`;
+    const counter = await Counter.findOneAndUpdate(
+      { _id: counterId },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true, setDefaultsOnInsert: true },
+    ).exec();
+
+    if (!counter) {
+      next(new Error("Unable to generate reservation number."));
+      return;
+    }
+
+    this.reservationNumber = `CF-${dateStr}-${String(counter.seq).padStart(4, "0")}`;
   }
   next();
 });

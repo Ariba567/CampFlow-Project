@@ -263,6 +263,52 @@ async function ensureCampsiteAndCampgroundMatch(
   }
 }
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+function getNightlyRate(campsite: { basePrice: number; weekendPrice?: number }, date: Date) {
+  const day = date.getDay();
+  if ((day === 0 || day === 6) && typeof campsite.weekendPrice === "number") {
+    return campsite.weekendPrice;
+  }
+  return campsite.basePrice;
+}
+
+function calculateReservationPricing(
+  campsite: { basePrice: number; weekendPrice?: number },
+  checkIn: Date,
+  checkOut: Date,
+) {
+  if (checkOut <= checkIn) {
+    throw Object.assign(new Error("Check-out date must be after check-in date."), { status: 400 });
+  }
+
+  const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / MS_PER_DAY);
+  if (nights <= 0) {
+    throw Object.assign(new Error("Check-out date must be after check-in date."), { status: 400 });
+  }
+
+  let subtotal = 0;
+  const current = new Date(checkIn);
+  for (let i = 0; i < nights; i += 1) {
+    subtotal += getNightlyRate(campsite, current);
+    current.setDate(current.getDate() + 1);
+  }
+
+  subtotal = Math.round(subtotal * 100) / 100;
+  const taxes = Math.round(subtotal * 0.1 * 100) / 100;
+  const total = Math.round((subtotal + taxes) * 100) / 100;
+
+  return {
+    baseRate: campsite.basePrice,
+    nights,
+    subtotal,
+    taxes,
+    fees: 0,
+    discount: 0,
+    total,
+  };
+}
+
 async function ensureManagerOwnsCampground(userId: string, campgroundId: string): Promise<void> {
   const campground = await Campground.findById(campgroundId).select("manager");
   if (!campground) {
@@ -289,9 +335,23 @@ export async function createReservation(
 
   await ensureReservationDoesNotOverlap(input.campsite, input.checkIn, input.checkOut);
 
+  const campsite = await Campsite.findById(input.campsite).select("basePrice weekendPrice").exec();
+  if (!campsite) {
+    throw Object.assign(new Error("Campsite not found."), { status: 404 });
+  }
+
+  const pricing = calculateReservationPricing(campsite, input.checkIn, input.checkOut);
+
   return Reservation.create({
-    ...input,
     customer: new mongoose.Types.ObjectId(userId),
+    campsite: new mongoose.Types.ObjectId(input.campsite),
+    campground: new mongoose.Types.ObjectId(input.campground),
+    checkIn: input.checkIn,
+    checkOut: input.checkOut,
+    guests: input.guests,
+    specialRequests: input.specialRequests,
+    status: "pending",
+    pricing,
   });
 }
 
@@ -324,21 +384,87 @@ export async function updateReservation(
     }
   }
 
-  if (input.campsite || input.campground || input.checkIn || input.checkOut) {
-    const campsiteId = input.campsite ? input.campsite : String(reservation.campsite);
-    const campgroundId = input.campground ? input.campground : String(reservation.campground);
-    const checkIn = input.checkIn ? input.checkIn : reservation.checkIn;
-    const checkOut = input.checkOut ? input.checkOut : reservation.checkOut;
+  if (userRole === "customer") {
+    const disallowedFields: Array<keyof ReservationUpdateInput> = [
+      "status",
+      "campground",
+      "campsite",
+      "pricing",
+      "cancellationReason",
+    ];
 
-    await ensureCampsiteAndCampgroundMatch(campsiteId, campgroundId);
-    await ensureReservationDoesNotOverlap(campsiteId, checkIn, checkOut, id);
+    for (const field of disallowedFields) {
+      if (field in input && input[field] !== undefined) {
+        throw Object.assign(new Error("Customers may not modify reservation status, campsite, campground, pricing, or cancellation details."), {
+          status: 403,
+        });
+      }
+    }
+  }
+
+  let updatedCampsiteId = String(reservation.campsite);
+  let updatedCampgroundId = String(reservation.campground);
+  let updatedCheckIn = reservation.checkIn;
+  let updatedCheckOut = reservation.checkOut;
+
+  if (input.campsite) {
+    updatedCampsiteId = input.campsite;
+  }
+  if (input.campground) {
+    updatedCampgroundId = input.campground;
+  }
+  if (input.checkIn) {
+    updatedCheckIn = input.checkIn;
+  }
+  if (input.checkOut) {
+    updatedCheckOut = input.checkOut;
+  }
+
+  if (input.campsite || input.campground || input.checkIn || input.checkOut) {
+    await ensureCampsiteAndCampgroundMatch(updatedCampsiteId, updatedCampgroundId);
+    await ensureReservationDoesNotOverlap(updatedCampsiteId, updatedCheckIn, updatedCheckOut, id);
+
+    const campsite = await Campsite.findById(updatedCampsiteId).select("basePrice weekendPrice campground").exec();
+    if (!campsite) {
+      throw Object.assign(new Error("Campsite not found."), { status: 404 });
+    }
+
+    if (!campsite.campground || String(campsite.campground) !== updatedCampgroundId) {
+      throw Object.assign(new Error("The campsite does not belong to the specified campground."), {
+        status: 400,
+      });
+    }
+
+    reservation.campsite = new mongoose.Types.ObjectId(updatedCampsiteId);
+    reservation.campground = new mongoose.Types.ObjectId(updatedCampgroundId);
+    reservation.checkIn = updatedCheckIn;
+    reservation.checkOut = updatedCheckOut;
+    reservation.pricing = calculateReservationPricing(campsite, updatedCheckIn, updatedCheckOut);
   }
 
   if (userRole === "manager" && input.campground) {
     await ensureManagerOwnsCampground(userId, input.campground);
   }
 
-  Object.assign(reservation, input);
+  if (input.guests) {
+    reservation.guests = {
+      adults: input.guests.adults ?? reservation.guests.adults,
+      children: input.guests.children ?? reservation.guests.children,
+      vehicles: input.guests.vehicles ?? reservation.guests.vehicles,
+    };
+  }
+
+  if (input.specialRequests !== undefined) {
+    reservation.specialRequests = input.specialRequests;
+  }
+
+  if (userRole !== "customer" && input.status !== undefined) {
+    reservation.status = input.status;
+  }
+
+  if (input.cancellationReason !== undefined) {
+    reservation.cancellationReason = input.cancellationReason;
+  }
 
   await reservation.save();
   return reservation;
