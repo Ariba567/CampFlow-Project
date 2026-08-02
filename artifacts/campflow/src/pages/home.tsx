@@ -2,12 +2,13 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, MapPin, Mountain, Sparkles, TentTree, Trees, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { siteCategories } from '@/data/campgrounds';
 import { usePageMetadata } from '@/hooks/usePageMetadata';
 
 const stays = [
-  { title: 'RV sites', description: 'Pull-through and back-in sites with full hookups and room to settle in.', icon: Mountain },
-  { title: 'Tent sites', description: 'Shaded, peaceful plots that put you close to the trail and the campfire.', icon: TentTree },
-  { title: 'Cabins & glamping', description: 'A little more comfort, with real beds and the outdoors at your door.', icon: Sparkles },
+  { title: 'RV sites', description: 'Pull-through and back-in sites with full hookups and room to settle in.', icon: Mountain, image: siteCategories.rv.image, alt: 'RV parked at a wooded campsite' },
+  { title: 'Tent sites', description: 'Shaded, peaceful plots that put you close to the trail and the campfire.', icon: TentTree, image: siteCategories.tent.image, alt: 'Tent campsite in the woods' },
+  { title: 'Cabins & glamping', description: 'A little more comfort, with real beds and the outdoors at your door.', icon: Sparkles, image: siteCategories.glamping.image, alt: 'Canvas glamping tent surrounded by nature' },
 ];
 
 const locations = ['Pine Ridge, Colorado', 'Lake Haven, Michigan', 'Bluewater, Oregon', 'Cedar Creek, Tennessee'];
@@ -41,8 +42,12 @@ export default function Home() {
           <h2 className="mt-3 font-serif text-4xl tracking-tight md:text-5xl">Simple stays, well spent.</h2>
         </div>
         <div className="grid gap-5 md:grid-cols-3">
-          {stays.map(({ title, description, icon: Icon }) => (
-            <Card key={title} className="border-card-border transition-transform hover:-translate-y-1">
+          {stays.map(({ title, description, icon: Icon, image, alt }) => (
+            <Card key={title} className="group overflow-hidden border-card-border transition-all hover:-translate-y-1 hover:shadow-md">
+              <div className="relative h-48 overflow-hidden">
+                <img src={image} alt={alt} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/45 via-transparent to-transparent" />
+              </div>
               <CardContent className="p-6">
                 <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-primary"><Icon className="h-5 w-5" /></div>
                 <h3 className="text-xl font-semibold">{title}</h3>

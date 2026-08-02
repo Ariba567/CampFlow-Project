@@ -14,7 +14,7 @@ export interface CampgroundData {
 }
 
 export const siteCategories: Record<SiteType, { name: string; description: string; image: string }> = {
-  rv: { name: 'RV camping', description: 'Spacious sites with easy access, hookups, and room to settle in.', image: 'https://images.unsplash.com/photo-1569134026343-a25e7b09e6ad?auto=format&fit=crop&w=900&q=85' },
+  rv: { name: 'RV camping', description: 'Spacious sites with easy access, hookups, and room to settle in.', image: 'https://images.unsplash.com/photo-1520437358207-323b43b50729?auto=format&fit=crop&w=900&q=85' },
   tent: { name: 'Tent sites', description: 'Peaceful, shaded sites for sleeping close to the sounds of nature.', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=900&q=85' },
   cabin: { name: 'Cabins', description: 'Cozy, practical cabins for a comfortable basecamp in every season.', image: 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=85' },
   glamping: { name: 'Glamping tents', description: 'Canvas stays with thoughtful comforts and a little extra magic.', image: 'https://images.unsplash.com/photo-1537225228614-56cc3556d7ed?auto=format&fit=crop&w=900&q=85' },
