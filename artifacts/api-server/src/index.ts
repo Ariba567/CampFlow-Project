@@ -7,6 +7,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { connectDB } from "./config/db";
 import { env } from "./config/env";
+import { seedSampleCampgrounds } from "./scripts/seedCampgrounds";
 
 const rawPort = process.env["PORT"];
 
@@ -33,8 +34,10 @@ app.listen(port, (err?: Error) => {
 
   // Non-blocking — the server is already accepting requests.
   // Requests that require DB will fail gracefully until connected.
-  connectDB().catch((err) => {
-    logger.error({ err }, "Fatal: could not establish MongoDB connection");
-    process.exit(1);
-  });
+  connectDB()
+    .then(() => seedSampleCampgrounds())
+    .catch((err) => {
+      logger.error({ err }, "Fatal: could not establish MongoDB connection or seed sample campgrounds");
+      process.exit(1);
+    });
 });
