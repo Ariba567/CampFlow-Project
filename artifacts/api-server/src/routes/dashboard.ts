@@ -20,6 +20,10 @@ const paginationSchema = z.object({
   upcoming: z.union([z.literal("true"), z.literal("false")]).optional(),
 });
 
+const adminUsersListSchema = paginationSchema.extend({
+  role: z.enum(["customer", "manager", "admin"]).optional(),
+});
+
 // Customer routes
 router.get("/customer/summary", authenticate, authorize("customer"), dashboardController.customerSummary);
 router.get("/customer/profile", authenticate, authorize("customer"), dashboardController.customerProfile);
@@ -43,6 +47,6 @@ router.get("/manager/reviews", authenticate, authorize("manager"), validate(pagi
 // Admin routes
 router.get("/admin/summary", authenticate, authorize("admin"), dashboardController.adminSummary);
 router.get("/admin/recent-activity", authenticate, authorize("admin"), validate(paginationSchema), dashboardController.adminRecentActivity);
-router.get("/admin/users", authenticate, authorize("admin"), validate(paginationSchema), dashboardController.adminUsers);
+router.get("/admin/users", authenticate, authorize("admin"), validate(adminUsersListSchema, "query"), dashboardController.adminUsers);
 
 export default router;
