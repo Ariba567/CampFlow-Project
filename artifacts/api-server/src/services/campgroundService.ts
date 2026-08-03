@@ -177,11 +177,9 @@ export async function listCampgrounds(
 }
 
 export async function getCampgroundById(id: string): Promise<ICampground> {
-  if (!mongoose.isValidObjectId(id)) {
-    throw Object.assign(new Error("Invalid campground ID."), { status: 400 });
-  }
-
-  const campground = await Campground.findById(id);
+  const campground = await Campground.findOne(
+    mongoose.isValidObjectId(id) ? { _id: id } : { slug: id },
+  );
   if (!campground) {
     throw Object.assign(new Error("Campground not found."), { status: 404 });
   }

@@ -33,15 +33,14 @@ export default function InteractiveCampMap({ campgroundName, campgroundId }: { c
     listCampsites(campgroundId)
       .then((data) => {
         const mapped: MapMarker[] = data
-          .filter((site) => site.mapCoordinates?.x != null && site.mapCoordinates?.y != null)
-          .map((site) => ({
+          .map((site, index) => ({
             id: String(site.siteNumber ?? site._id ?? site.id),
             campsiteId: String(site._id ?? site.id),
             name: String(site.name ?? site.siteNumber ?? ''),
             type: site.type as SiteType,
             status: site.isAvailable === false ? 'occupied' : 'available',
-            x: Number(site.mapCoordinates?.x ?? 0),
-            y: Number(site.mapCoordinates?.y ?? 0),
+            x: Number(site.mapCoordinates?.x ?? 20 + (index % 3) * 30),
+            y: Number(site.mapCoordinates?.y ?? 28 + (Math.floor(index / 3) % 2) * 38),
           }));
         setLiveSites(mapped);
       })

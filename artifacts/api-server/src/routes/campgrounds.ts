@@ -114,7 +114,6 @@ router.get(
 
 router.get(
   "/:id",
-  validate(mongoIdSchema, "params"),
   campgroundController.getCampground,
 );
 

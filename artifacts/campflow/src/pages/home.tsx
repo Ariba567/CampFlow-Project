@@ -6,9 +6,10 @@ import { siteCategories } from '@/data/campgrounds';
 import { usePageMetadata } from '@/hooks/usePageMetadata';
 
 const stays = [
-  { title: 'RV sites', description: 'Pull-through and back-in sites with full hookups and room to settle in.', icon: Mountain, image: siteCategories.rv.image, alt: 'RV parked at a wooded campsite' },
-  { title: 'Tent sites', description: 'Shaded, peaceful plots that put you close to the trail and the campfire.', icon: TentTree, image: siteCategories.tent.image, alt: 'Tent campsite in the woods' },
-  { title: 'Cabins & glamping', description: 'A little more comfort, with real beds and the outdoors at your door.', icon: Sparkles, image: siteCategories.glamping.image, alt: 'Canvas glamping tent surrounded by nature' },
+  { type: 'rv', title: 'RV sites', description: 'Pull-through and back-in sites with full hookups and room to settle in.', icon: Mountain, image: siteCategories.rv.image, alt: 'RV parked at a wooded campsite' },
+  { type: 'tent', title: 'Tent sites', description: 'Shaded, peaceful plots that put you close to the trail and the campfire.', icon: TentTree, image: siteCategories.tent.image, alt: 'Tent campsite in the woods' },
+  { type: 'cabin', title: 'Cabins', description: 'A comfortable basecamp with real beds, warm details, and room to recharge.', icon: Trees, image: siteCategories.cabin.image, alt: 'Cozy cabin in the woods' },
+  { type: 'glamping', title: 'Glamping', description: 'Canvas stays with thoughtful comforts and the outdoors at your door.', icon: Sparkles, image: siteCategories.glamping.image, alt: 'Canvas glamping tent surrounded by nature' },
 ];
 
 const locations = ['Pine Ridge, Colorado', 'Lake Haven, Michigan', 'Bluewater, Oregon', 'Cedar Creek, Tennessee'];
@@ -41,19 +42,21 @@ export default function Home() {
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Stay your way</p>
           <h2 className="mt-3 font-serif text-4xl tracking-tight md:text-5xl">Simple stays, well spent.</h2>
         </div>
-        <div className="grid gap-5 md:grid-cols-3">
-          {stays.map(({ title, description, icon: Icon, image, alt }) => (
-            <Card key={title} className="group overflow-hidden border-card-border transition-all hover:-translate-y-1 hover:shadow-md">
-              <div className="relative h-48 overflow-hidden">
-                <img src={image} alt={alt} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/45 via-transparent to-transparent" />
-              </div>
-              <CardContent className="p-6">
-                <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-primary"><Icon className="h-5 w-5" /></div>
-                <h3 className="text-xl font-semibold">{title}</h3>
-                <p className="mt-2 leading-7 text-muted-foreground">{description}</p>
-              </CardContent>
-            </Card>
+        <div className="grid gap-5 md:grid-cols-2">
+          {stays.map(({ type, title, description, icon: Icon, image, alt }) => (
+            <Link key={type} to={`/categories/${type}`} className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4">
+              <Card className="h-full overflow-hidden border-card-border bg-card transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
+                <div className="relative h-52 overflow-hidden">
+                  <img src={image} alt={alt} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/70 via-primary/10 to-transparent" />
+                  <div className="absolute bottom-4 left-5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-card/90 text-primary shadow-sm backdrop-blur"><Icon className="h-5 w-5" /></div>
+                </div>
+                <CardContent className="flex items-end justify-between gap-4 p-6">
+                  <div><h3 className="text-xl font-semibold">{title}</h3><p className="mt-2 leading-7 text-muted-foreground">{description}</p></div>
+                  <ArrowRight className="mb-1 h-5 w-5 shrink-0 text-accent transition-transform duration-300 group-hover:translate-x-1" />
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </section>

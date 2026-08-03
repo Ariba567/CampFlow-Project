@@ -6,6 +6,7 @@ export const idOf = (item: ApiItem | string | undefined) => typeof item === 'str
 export const labelOf = (item: ApiItem | string | undefined, fallback = '—') => typeof item === 'string' ? fallback : String(item?.name ?? item?.siteNumber ?? item?.reservationNumber ?? fallback);
 
 export async function listCampgrounds() { return (await api.get<Page<ApiItem>>('/campgrounds', { params: { page: 1, limit: 100, isActive: true } })).data.data; }
+export async function getCampground(idOrSlug: string) { return (await api.get<{ data: ApiItem }>(`/campgrounds/${idOrSlug}`)).data.data; }
 export async function listCampsites(campground?: string, type?: string) { return (await api.get<Page<ApiItem>>('/campsites', { params: { page: 1, limit: 100, campground, type, isAvailable: true } })).data.data; }
 export async function listPricingRules(params: Record<string, unknown> = {}) { return (await api.get<Page<ApiItem>>('/pricing', { params: { page: 1, limit: 100, ...params } })).data; }
 export async function listReservations(params: Record<string, unknown> = {}) { return (await api.get<Page<ApiItem>>('/reservations', { params: { page: 1, limit: 100, ...params } })).data; }
