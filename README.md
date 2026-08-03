@@ -82,6 +82,12 @@ This creates an Administrator account with email admin@campflow.test and passwor
 
 These are development and demo credentials only and should be changed or removed before any real production use.
 
+### Sample Campground Data
+
+Sample campgrounds and campsites are seeded automatically the first time the backend starts against an empty database. No manual command is needed for this step. If the campgrounds collection already contains data, this step is skipped automatically on every later startup.
+
+This is separate from the admin and manager account seeding above, which remains a manual step.
+
 ### Running Locally
 
 Two terminals are needed at the same time.
@@ -109,4 +115,4 @@ Invoice download uses the browser print and save as PDF function rather than a g
 
 ## Author
 
-Built as a solo intern project for the BranDive Media Solutions sprintt.
+Built as a solo intern project for the BranDive Media Solutions sprint.
