@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Menu, Trees } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) => `relative py-2 transition-colors after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:origin-left after:rounded-full after:bg-accent after:transition-transform ${isActive ? 'text-primary after:scale-x-100' : 'text-foreground/80 hover:text-foreground after:scale-x-0 hover:after:scale-x-100'}`;
@@ -8,6 +10,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) => `relative py-2 tra
 export default function Navbar() {
   const { isAuthenticated, logout, user } = useAuth();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
   const signOut = async () => {
     await logout();
     navigate('/', { replace: true });
@@ -37,6 +40,11 @@ export default function Navbar() {
           <NavLink to="/about" className={navLinkClass}>
             About
           </NavLink>
+          {isAuthenticated && user?.role === 'customer' && (
+            <NavLink to="/dashboard" className={navLinkClass}>
+              My Trips
+            </NavLink>
+          )}
         </nav>
 
         <div className="flex items-center gap-3">
@@ -47,9 +55,54 @@ export default function Navbar() {
             <Button asChild variant="outline" size="sm"><Link to="/login">Sign in</Link></Button>
             <Button asChild variant="default" size="sm"><Link to="/register">Get started</Link></Button>
           </>}
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-4 w-4" />
-          </Button>
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-72">
+              <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+              <nav className="mt-8 flex flex-col gap-1 text-sm font-medium text-foreground">
+                <NavLink to="/campgrounds" className={navLinkClass} onClick={() => setMenuOpen(false)}>
+                  Campgrounds
+                </NavLink>
+                <NavLink to="/pricing" className={navLinkClass} onClick={() => setMenuOpen(false)}>
+                  Pricing
+                </NavLink>
+                <NavLink to="/activities" className={navLinkClass} onClick={() => setMenuOpen(false)}>
+                  Activities
+                </NavLink>
+                <NavLink to="/about" className={navLinkClass} onClick={() => setMenuOpen(false)}>
+                  About
+                </NavLink>
+                {isAuthenticated && user?.role === 'customer' && (
+                  <NavLink to="/dashboard" className={navLinkClass} onClick={() => setMenuOpen(false)}>
+                    My Trips
+                  </NavLink>
+                )}
+              </nav>
+              <div className="mt-6 flex flex-col gap-3 border-t border-border pt-6">
+                {isAuthenticated ? (
+                  <>
+                    <Button asChild variant="outline" size="sm" onClick={() => setMenuOpen(false)}>
+                      <Link to={user?.role === 'customer' ? '/dashboard/profile' : '/dashboard'}>My account</Link>
+                    </Button>
+                    <Button variant="default" size="sm" onClick={() => void signOut()}>Sign out</Button>
+                  </>
+                ) : (
+                  <>
+                    <Button asChild variant="outline" size="sm" onClick={() => setMenuOpen(false)}>
+                      <Link to="/login">Sign in</Link>
+                    </Button>
+                    <Button asChild variant="default" size="sm" onClick={() => setMenuOpen(false)}>
+                      <Link to="/register">Get started</Link>
+                    </Button>
+                  </>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
