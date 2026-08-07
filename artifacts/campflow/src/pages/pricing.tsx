@@ -12,6 +12,39 @@ const samplePrices = [
   { type: 'Glamping tent', regular: '$149', weekend: '$179', holiday: '$209', note: 'Furnished canvas stay' },
 ];
 
+// Static customer-facing description per site type (not pricing data).
+const detailsByType: Record<string, string> = {
+  'Tent site': 'Up to 4 guests',
+  'RV site': 'Water & electric included',
+  Cabin: 'Sleeps up to 4',
+  'Glamping tent': 'Furnished canvas stay',
+};
+
+const currency = (value: unknown) => (value == null ? '—' : `$${Number(value).toFixed(0)}`);
+
+const siteTypeOf = (name: unknown) => String(name ?? '').split(' — ')[0].trim();
+
+const tierOf = (rule: ApiItem): 'regular' | 'weekend' | 'holiday' =>
+  rule.type === 'holiday' ? 'holiday' : rule.type === 'weekend' ? 'weekend' : 'regular';
+
+// Group the live rules by site type into ONE row per type (Stay type | Regular | Weekend | Holiday | Details).
+const groupLiveRules = (rules: ApiItem[]) => {
+  const byType: Record<string, { regular?: number; weekend?: number; holiday?: number }> = {};
+  for (const rule of rules) {
+    const type = siteTypeOf(rule.name);
+    if (!type) continue;
+    byType[type] ??= {};
+    byType[type][tierOf(rule)] = Number(rule.flatRate);
+  }
+  return Object.entries(byType).map(([type, tiers]) => ({
+    type,
+    regular: currency(tiers.regular),
+    weekend: currency(tiers.weekend),
+    holiday: currency(tiers.holiday),
+    note: detailsByType[type] ?? '',
+  }));
+};
+
 export default function Pricing() {
   usePageMetadata('Pricing — CampFlow', 'View current CampFlow pricing rules for seasonal, weekend, holiday, and promotional rates.');
   const [pricing, setPricing] = useState<ApiItem[]>([]);
@@ -28,6 +61,9 @@ export default function Pricing() {
       .finally(() => setLoading(false));
   }, []);
 
+  const groupedRows = groupLiveRules(pricing);
+  const rows = !loading && !error && groupedRows.length > 0 ? groupedRows : samplePrices;
+
   return (
     <div className="space-y-12 pb-10 md:space-y-16">
       <section className="max-w-3xl">
@@ -40,69 +76,32 @@ export default function Pricing() {
         </p>
       </section>
 
-      {!loading && !error && pricing.length > 0 ? (
-        <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left">
-              <thead className="bg-secondary/60 text-sm">
-                <tr>
-                  <th className="px-6 py-4 font-semibold">Pricing rule</th>
-                  <th className="px-6 py-4 font-semibold">Type</th>
-                  <th className="px-6 py-4 font-semibold">Adjustment</th>
-                  <th className="px-6 py-4 font-semibold">Applies to</th>
-                  <th className="px-6 py-4 font-semibold">Dates</th>
+      <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[680px] text-left">
+            <thead className="bg-secondary/60 text-sm">
+              <tr>
+                <th className="px-6 py-4 font-semibold">Stay type</th>
+                <th className="px-6 py-4 font-semibold">Regular</th>
+                <th className="px-6 py-4 font-semibold">Weekend</th>
+                <th className="px-6 py-4 font-semibold">Holiday</th>
+                <th className="px-6 py-4 font-semibold">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((price) => (
+                <tr key={price.type} className="border-t">
+                  <td className="px-6 py-5 font-semibold">{price.type}</td>
+                  <td className="px-6 py-5 text-muted-foreground">{price.regular}<span className="ml-1 text-xs">/night</span></td>
+                  <td className="px-6 py-5 text-muted-foreground">{price.weekend}<span className="ml-1 text-xs">/night</span></td>
+                  <td className="px-6 py-5 text-muted-foreground">{price.holiday}<span className="ml-1 text-xs">/night</span></td>
+                  <td className="px-6 py-5 text-sm text-muted-foreground">{price.note}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {pricing.map((rule) => (
-                  <tr key={String(rule._id ?? rule.id)} className="border-t">
-                    <td className="px-6 py-5 font-semibold">{rule.name}</td>
-                    <td className="px-6 py-5 text-muted-foreground">{rule.type}</td>
-                    <td className="px-6 py-5 text-muted-foreground">
-                      {rule.applyMode === 'flat_rate'
-                        ? `$${rule.flatRate?.toFixed?.(2) ?? rule.flatRate ?? 0} ${rule.campsite ? 'per site' : 'flat'}`
-                        : rule.applyMode === 'override'
-                          ? `Override to $${rule.flatRate?.toFixed?.(2) ?? 0}`
-                          : `${rule.multiplier ? `${rule.multiplier}x` : 'N/A'}`}
-                    </td>
-                    <td className="px-6 py-5 text-muted-foreground">
-                      {rule.campsite?.name ? `${rule.campsite.name} (${rule.campsite.siteNumber ?? ''})` : rule.campground?.name ?? 'All campgrounds'}
-                    </td>
-                    <td className="px-6 py-5 text-muted-foreground">{rule.startDate ? new Date(rule.startDate).toLocaleDateString() : '—'} – {rule.endDate ? new Date(rule.endDate).toLocaleDateString() : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : (
-        <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[680px] text-left">
-              <thead className="bg-secondary/60 text-sm">
-                <tr>
-                  <th className="px-6 py-4 font-semibold">Stay type</th>
-                  <th className="px-6 py-4 font-semibold">Regular</th>
-                  <th className="px-6 py-4 font-semibold">Weekend</th>
-                  <th className="px-6 py-4 font-semibold">Holiday</th>
-                  <th className="px-6 py-4 font-semibold">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {samplePrices.map((price) => (
-                  <tr key={price.type} className="border-t">
-                    <td className="px-6 py-5 font-semibold">{price.type}</td>
-                    <td className="px-6 py-5 text-muted-foreground">{price.regular}<span className="ml-1 text-xs">/night</span></td>
-                    <td className="px-6 py-5 text-muted-foreground">{price.weekend}<span className="ml-1 text-xs">/night</span></td>
-                    <td className="px-6 py-5 text-muted-foreground">{price.holiday}<span className="ml-1 text-xs">/night</span></td>
-                    <td className="px-6 py-5 text-sm text-muted-foreground">{price.note}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       {error && <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">{error}</div>}
 

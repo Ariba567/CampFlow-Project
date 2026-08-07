@@ -82,6 +82,14 @@ This creates an Administrator account with email admin@campflow.test and passwor
 
 These are development and demo credentials only and should be changed or removed before any real production use.
 
+### Seeding Pricing Rules
+
+The Pricing collection starts empty. Run the seed script once after a fresh DB setup to insert the initial pricing rules (Tent, RV, Cabin, and Glamping flat rates for regular, weekend, and holiday):
+
+pnpm --filter @workspace/api-server run seed:pricing
+
+This is safe to re-run; rules that already exist are skipped, so no duplicates are created. It requires at least one campground to exist (campgrounds are seeded automatically on first backend start).
+
 ### Sample Campground Data
 
 Sample campgrounds and campsites are seeded automatically the first time the backend starts against an empty database. No manual command is needed for this step. If the campgrounds collection already contains data, this step is skipped automatically on every later startup.

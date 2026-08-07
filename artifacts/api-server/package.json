@@ -8,7 +8,7 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "seed:admin": "tsx ./src/scripts/seedAdmin.ts"
+"seed:admin":"tsx ./src/scripts/seedAdmin.ts","seed:pricing":"tsx ./src/scripts/seedPricing.ts"
   },
   "dependencies": {
     "@workspace/api-zod": "workspace:*",
