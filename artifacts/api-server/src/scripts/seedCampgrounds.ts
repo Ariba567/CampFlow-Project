@@ -136,8 +136,45 @@ async function findOrCreateSeedManager() {
   return { manager, created: true };
 }
 
+function mapCoordinatesFor(index: number) {
+  return { x: 20 + (index % 3) * 30, y: 28 + (Math.floor(index / 3) % 2) * 38 };
+}
+
+async function backfillSeedCampsiteCoordinates(): Promise<number> {
+  let updated = 0;
+
+  for (const { email, sites } of sampleCampgrounds) {
+    const campground = await Campground.findOne({ email }).select("_id").lean();
+    if (!campground) continue;
+
+    const operations = sites.map((site, index) => ({
+      updateOne: {
+        filter: {
+          campground: campground._id,
+          siteNumber: site.siteNumber,
+          $or: [
+            { mapCoordinates: { $exists: false } },
+            { "mapCoordinates.x": { $exists: false } },
+            { "mapCoordinates.y": { $exists: false } },
+          ],
+        },
+        update: { $set: { mapCoordinates: mapCoordinatesFor(index) } },
+      },
+    }));
+
+    if (operations.length) {
+      const result = await Campsite.bulkWrite(operations);
+      updated += result.modifiedCount;
+    }
+  }
+
+  return updated;
+}
+
 export async function seedSampleCampgrounds(): Promise<{ seeded: boolean; campgroundCount: number; campsiteCount: number }> {
   if (await Campground.exists({})) {
+    const coordinatesBackfilled = await backfillSeedCampsiteCoordinates();
+    if (coordinatesBackfilled) console.log(`Backfilled map coordinates for ${coordinatesBackfilled} sample campsites.`);
     console.log("Sample campground seeding skipped: campgrounds already exist.");
     return { seeded: false, campgroundCount: 0, campsiteCount: 0 };
   }
@@ -173,7 +210,7 @@ export async function seedSampleCampgrounds(): Promise<{ seeded: boolean; campgr
       weekendPrice: site.weekendPrice,
       isActive: true,
       isAvailable: true,
-      mapCoordinates: { x: 20 + (index % 3) * 30, y: 35 },
+      mapCoordinates: mapCoordinatesFor(index),
       features: site.features,
       rating: { average: 0, count: 0 },
     })));

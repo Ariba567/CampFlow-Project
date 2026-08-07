@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, MapPin } from 'lucide-react';
+import { ArrowLeft, Check, Heart, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,11 +33,15 @@ export default function CampgroundDetail() {
     if (!slug) return;
     setLoading(true);
     setError(null);
-    Promise.all([getCampground(slug), isAuthenticated ? listFavorites() : Promise.resolve({ data: [] })])
-      .then(async ([campgroundData, favoritesData]) => {
+    getCampground(slug)
+      .then(async (campgroundData) => {
         setCampground(campgroundData);
-        setFavoriteIds(favoritesData.data.map((item) => idOf(item)));
-        setSites(await listCampsites(idOf(campgroundData)));
+        const [sitesData, favoritesResult] = await Promise.all([
+          listCampsites(idOf(campgroundData)),
+          isAuthenticated ? listFavorites().catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+        ]);
+        setSites(sitesData);
+        setFavoriteIds(favoritesResult.data.map((item) => idOf(item)));
       })
       .catch(() => setError('We could not load campground details.'))
       .finally(() => setLoading(false));

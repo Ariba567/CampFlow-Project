@@ -23,9 +23,9 @@ export default function Home() {
           src="https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&w=1800&q=70"
           alt="Family campsite among tall trees"
           loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover opacity-35"
+          className="absolute inset-0 h-full w-full object-cover opacity-50"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/85 to-primary/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/60 to-primary/15" />
         <div className="relative max-w-3xl">
           <p className="mb-5 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-primary-foreground/80"><Trees className="h-4 w-4" /> Green Valley Campgrounds</p>
           <h1 className="font-serif text-5xl leading-[1.05] tracking-tight md:text-7xl">Make room for the wild.</h1>

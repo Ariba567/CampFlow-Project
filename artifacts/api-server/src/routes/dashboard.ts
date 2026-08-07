@@ -27,26 +27,26 @@ const adminUsersListSchema = paginationSchema.extend({
 // Customer routes
 router.get("/customer/summary", authenticate, authorize("customer"), dashboardController.customerSummary);
 router.get("/customer/profile", authenticate, authorize("customer"), dashboardController.customerProfile);
-router.get("/customer/reservations", authenticate, authorize("customer"), validate(paginationSchema), dashboardController.customerReservations);
-router.get("/customer/favorites", authenticate, authorize("customer"), validate(paginationSchema), dashboardController.customerFavorites);
+router.get("/customer/reservations", authenticate, authorize("customer"), validate(paginationSchema, "query"), dashboardController.customerReservations);
+router.get("/customer/favorites", authenticate, authorize("customer"), validate(paginationSchema, "query"), dashboardController.customerFavorites);
 router.post("/customer/favorites/:id", authenticate, authorize("customer"), validate(mongoIdSchema, "params"), dashboardController.addCustomerFavorite);
 router.delete("/customer/favorites/:id", authenticate, authorize("customer"), validate(mongoIdSchema, "params"), dashboardController.removeCustomerFavorite);
-router.get("/customer/activities", authenticate, authorize("customer"), validate(paginationSchema), dashboardController.customerActivities);
-router.get("/customer/notifications", authenticate, authorize("customer"), validate(paginationSchema), dashboardController.customerNotifications);
-router.get("/customer/payments", authenticate, authorize("customer"), validate(paginationSchema), dashboardController.customerPayments);
+router.get("/customer/activities", authenticate, authorize("customer"), validate(paginationSchema, "query"), dashboardController.customerActivities);
+router.get("/customer/notifications", authenticate, authorize("customer"), validate(paginationSchema, "query"), dashboardController.customerNotifications);
+router.get("/customer/payments", authenticate, authorize("customer"), validate(paginationSchema, "query"), dashboardController.customerPayments);
 router.get("/customer/stats", authenticate, authorize("customer"), dashboardController.customerStats);
 
 // Manager routes
 router.get("/manager/summary", authenticate, authorize("manager"), dashboardController.managerSummary);
 router.get("/manager/campground-stats", authenticate, authorize("manager"), dashboardController.managerCampgroundStats);
-router.get("/manager/campsites", authenticate, authorize("manager"), validate(paginationSchema), dashboardController.managerCampsiteOccupancy);
-router.get("/manager/reservations", authenticate, authorize("manager"), validate(paginationSchema), dashboardController.managerReservations);
-router.get("/manager/revenue", authenticate, authorize("manager"), validate(paginationSchema), dashboardController.managerRevenue);
-router.get("/manager/reviews", authenticate, authorize("manager"), validate(paginationSchema), dashboardController.managerReviews);
+router.get("/manager/campsites", authenticate, authorize("manager"), validate(paginationSchema, "query"), dashboardController.managerCampsiteOccupancy);
+router.get("/manager/reservations", authenticate, authorize("manager"), validate(paginationSchema, "query"), dashboardController.managerReservations);
+router.get("/manager/revenue", authenticate, authorize("manager"), validate(paginationSchema, "query"), dashboardController.managerRevenue);
+router.get("/manager/reviews", authenticate, authorize("manager"), validate(paginationSchema, "query"), dashboardController.managerReviews);
 
 // Admin routes
 router.get("/admin/summary", authenticate, authorize("admin"), dashboardController.adminSummary);
-router.get("/admin/recent-activity", authenticate, authorize("admin"), validate(paginationSchema), dashboardController.adminRecentActivity);
+router.get("/admin/recent-activity", authenticate, authorize("admin"), validate(paginationSchema, "query"), dashboardController.adminRecentActivity);
 router.get("/admin/users", authenticate, authorize("admin"), validate(adminUsersListSchema, "query"), dashboardController.adminUsers);
 
 export default router;

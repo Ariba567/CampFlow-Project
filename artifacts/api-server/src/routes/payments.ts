@@ -48,8 +48,8 @@ const paymentListSchema = paginationSchema.extend({
   method: z.enum(["credit_card", "debit_card", "paypal", "bank_transfer", "other"]).optional(),
   minAmount: z.coerce.number().min(0).optional(),
   maxAmount: z.coerce.number().min(0).optional(),
-  fromDate: z.preprocess((value) => new Date(value as string), z.date().optional()),
-  toDate: z.preprocess((value) => new Date(value as string), z.date().optional()),
+  fromDate: z.coerce.date().optional(),
+  toDate: z.coerce.date().optional(),
   sort: z.enum(["createdAt", "amount", "status", "method"]).optional(),
   order: z.enum(["asc", "desc"]).default("desc"),
 });
