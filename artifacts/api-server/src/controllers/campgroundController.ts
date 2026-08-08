@@ -2,9 +2,20 @@ import { Request, Response } from "express";
 import * as campgroundService from "../services/campgroundService";
 import { UserRole } from "../models/User";
 
+function coerceIsActive(value: unknown): boolean | undefined {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return undefined;
+}
+
 export async function listCampgrounds(req: Request, res: Response): Promise<void> {
   try {
-    const result = await campgroundService.listCampgrounds(req.query as unknown as campgroundService.CampgroundQueryOptions);
+    const query = req.query as Record<string, unknown>;
+    const options: campgroundService.CampgroundQueryOptions = {
+      ...query,
+      isActive: coerceIsActive(query.isActive),
+    } as unknown as campgroundService.CampgroundQueryOptions;
+    const result = await campgroundService.listCampgrounds(options);
     res.status(200).json({ data: result.data, meta: {
       total: result.total,
       page: result.page,

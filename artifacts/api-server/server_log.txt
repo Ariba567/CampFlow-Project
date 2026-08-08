@@ -1,0 +1,128 @@
+$ cross-env NODE_ENV=development pnpm run build && pnpm run start
+$ node ./build.mjs
+
+  dist\index.mjs                   4.5mb
+  dist\pino-worker.mjs           153.4kb
+  dist\pino-file.mjs             142.1kb
+  dist\pino-pretty.mjs           114.4kb
+  dist\thread-stream-worker.mjs    7.3kb
+  ...and 5 more output files...
+
+Done in 962ms
+$ node --enable-source-maps ./dist/index.mjs
+◇ injected env (7) from ..\..\.env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from ..\..\.env // tip: ⌘ suppress logs { quiet: true }
+(node:4036) [MONGOOSE] Warning: Duplicate schema index on {"location":"2dsphere"} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:4036) [MONGOOSE] Warning: Duplicate schema index on {"slug":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:4036) [MONGOOSE] Warning: Duplicate schema index on {"reservationNumber":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[03:57:19.317] [32mINFO[39m (4036): [36mCampFlow API server listening[39m
+    [35mport[39m: 5000
+    [35menv[39m: "development"
+[03:57:20.533] [32mINFO[39m (4036): [36mMongoDB connected[39m
+    [35mhost[39m: "ac-jueqnwe-shard-00-01.lzxejfn.mongodb.net"
+Sample campground seeding skipped: campgrounds already exist.
+[03:57:52.642] [32mINFO[39m (4036): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 1,
+      "method": "GET",
+      "url": "/api/campgrounds"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 98
+[03:58:03.029] [32mINFO[39m (4036): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 2,
+      "method": "GET",
+      "url": "/api/campgrounds"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 89
+[03:58:03.420] [32mINFO[39m (4036): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 3,
+      "method": "GET",
+      "url": "/api/campgrounds"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 85
+[03:58:14.159] [32mINFO[39m (4036): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 4,
+      "method": "GET",
+      "url": "/api/campgrounds"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 84
+[03:58:41.163] [32mINFO[39m (4036): [36mUser logged in[39m
+    [35muserId[39m: "6a6de6e3f84c01c98976bb6c"
+[03:58:41.165] [32mINFO[39m (4036): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 5,
+      "method": "POST",
+      "url": "/api/auth/login"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 695
+[03:58:54.244] [32mINFO[39m (4036): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 6,
+      "method": "PATCH",
+      "url": "/api/campgrounds/6a6fe5cba690e16146ee4c32"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 193
+[03:59:05.791] [32mINFO[39m (4036): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 7,
+      "method": "GET",
+      "url": "/api/campgrounds"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 81
+[03:59:05.935] [32mINFO[39m (4036): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 8,
+      "method": "GET",
+      "url": "/api/campgrounds"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 88
+[03:59:15.693] [32mINFO[39m (4036): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 9,
+      "method": "PATCH",
+      "url": "/api/campgrounds/6a6fe5cba690e16146ee4c32"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 168
+[03:59:15.895] [32mINFO[39m (4036): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 10,
+      "method": "GET",
+      "url": "/api/campgrounds"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 88
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.
