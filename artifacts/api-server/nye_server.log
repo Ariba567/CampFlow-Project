@@ -1,0 +1,174 @@
+◇ injected env (7) from ..\..\.env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from ..\..\.env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+(node:26316) [MONGOOSE] Warning: Duplicate schema index on {"location":"2dsphere"} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26316) [MONGOOSE] Warning: Duplicate schema index on {"slug":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:26316) [MONGOOSE] Warning: Duplicate schema index on {"reservationNumber":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[17:43:08.329] [32mINFO[39m (26316): [36mCampFlow API server listening[39m
+    [35mport[39m: 5000
+    [35menv[39m: "development"
+[17:43:09.498] [32mINFO[39m (26316): [36mMongoDB connected[39m
+    [35mhost[39m: "ac-jueqnwe-shard-00-01.lzxejfn.mongodb.net"
+Sample campground seeding skipped: campgrounds already exist.
+[17:43:39.491] [32mINFO[39m (26316): [36mNew user registered[39m
+    [35muserId[39m: "6a77247b5b113e76ca1fee67"
+[17:43:39.588] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 1,
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 584
+[17:43:39.804] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 2,
+      "method": "GET",
+      "url": "/api/campsites"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 199
+[17:43:40.043] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 3,
+      "method": "GET",
+      "url": "/api/reservations/quote"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 232
+[17:43:40.530] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 4,
+      "method": "POST",
+      "url": "/api/reservations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 482
+[17:43:40.769] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 5,
+      "method": "DELETE",
+      "url": "/api/reservations/6a77247c5b113e76ca1fee74"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 236
+[18:27:21.250] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 6,
+      "method": "GET",
+      "url": "/api/reservations/quote"
+    }
+    [35mres[39m: {
+      "statusCode": 400
+    }
+    [35mresponseTime[39m: 225
+[18:27:25.313] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 7,
+      "method": "GET",
+      "url": "/api/reservations/quote"
+    }
+    [35mres[39m: {
+      "statusCode": 400
+    }
+    [35mresponseTime[39m: 218
+[18:27:29.996] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 8,
+      "method": "GET",
+      "url": "/api/reservations/quote"
+    }
+    [35mres[39m: {
+      "statusCode": 400
+    }
+    [35mresponseTime[39m: 224
+[18:30:09.538] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 9,
+      "method": "GET",
+      "url": "/api/auth/me"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 78
+[18:30:09.948] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 10,
+      "method": "GET",
+      "url": "/api/campgrounds"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 80
+[18:30:10.159] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 11,
+      "method": "GET",
+      "url": "/api/campsites"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 171
+[18:30:29.654] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 12,
+      "method": "GET",
+      "url": "/api/reservations/quote"
+    }
+    [35mres[39m: {
+      "statusCode": 400
+    }
+    [35mresponseTime[39m: 225
+[18:30:41.402] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 13,
+      "method": "GET",
+      "url": "/api/auth/me"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 77
+[18:30:41.807] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 14,
+      "method": "GET",
+      "url": "/api/campgrounds"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 79
+[18:30:42.000] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 15,
+      "method": "GET",
+      "url": "/api/campsites"
+    }
+    [35mres[39m: {
+      "statusCode": 304
+    }
+    [35mresponseTime[39m: 156
+[18:31:05.344] [32mINFO[39m (26316): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 16,
+      "method": "GET",
+      "url": "/api/reservations/quote"
+    }
+    [35mres[39m: {
+      "statusCode": 400
+    }
+    [35mresponseTime[39m: 217

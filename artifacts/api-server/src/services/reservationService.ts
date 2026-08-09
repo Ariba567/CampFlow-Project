@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import Reservation, { IReservation, ReservationStatus } from "../models/Reservation";
-import Campsite from "../models/Campsite";
+import Campsite, { ICampsite } from "../models/Campsite";
 import Campground from "../models/Campground";
+import Pricing, { PricingType, SiteTypeEnum } from "../models/Pricing";
 import { UserRole } from "../models/User";
 
 export interface ReservationCreateInput {
@@ -265,19 +266,98 @@ async function ensureCampsiteAndCampgroundMatch(
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-function getNightlyRate(campsite: { basePrice: number; weekendPrice?: number }, date: Date) {
-  const day = date.getDay();
-  if ((day === 0 || day === 6) && typeof campsite.weekendPrice === "number") {
-    return campsite.weekendPrice;
-  }
-  return campsite.basePrice;
+// ─── Holiday date logic ────────────────────────────────────────────────────────
+// Specific calendar dates treated as Holiday rate per booking requirements.
+// New Year's Day (Jan 1), Christmas (Dec 25), and the specified Easter Sundays.
+const HOLIDAY_DATES_ISO = new Set([
+  // New Year's Day (Jan 1) across the active window
+  "2024-01-01", "2025-01-01", "2026-01-01", "2027-01-01", "2028-01-01", "2029-01-01", "2030-01-01",
+  // Christmas (Dec 25)
+  "2024-12-25", "2025-12-25", "2026-12-25", "2027-12-25", "2028-12-25", "2029-12-25", "2030-12-25",
+  // Easter Sunday
+  "2024-03-31", "2025-04-20", "2026-04-05",
+  "2027-03-28", "2028-04-16", "2029-04-01", "2030-04-21",
+]);
+
+function toLocalDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
-function calculateReservationPricing(
-  campsite: { basePrice: number; weekendPrice?: number },
+function isHoliday(date: Date): boolean {
+  // New Year's Eve (Dec 31) is a fixed month/day match that applies every year.
+  if (date.getMonth() === 11 && date.getDate() === 31) return true;
+  return HOLIDAY_DATES_ISO.has(toLocalDateKey(date));
+}
+
+// Map a campsite type to the rule type used when looking up the nightly rate.
+function ruleTypeFor(date: Date): PricingType {
+  if (isHoliday(date)) return "holiday";
+  const day = date.getDay();
+  if (day === 0 || day === 6) return "weekend";
+  return "seasonal";
+}
+
+export interface ReservationQuote {
+  campground: string;
+  campsite: string;
+  siteType: string;
+  nights: number;
+  nightBreakdown: Array<{ date: string; rateLabel: string; rate: number }>;
+  baseRate: number;
+  subtotal: number;
+  taxes: number;
+  fees: number;
+  discount: number;
+  total: number;
+}
+
+// Look up the applicable flat rate for a campground + site type + date from the
+// Pricing collection. Throws a clear error if no rule exists for that site.
+async function getNightlyRateFromPricing(
+  campgroundId: mongoose.Types.ObjectId,
+  siteType: string,
+  date: Date,
+): Promise<{ rate: number; label: string }> {
+  const ruleType = ruleTypeFor(date);
+  const rule = await Pricing.findOne({
+    campground: campgroundId,
+    siteType: siteType as SiteTypeEnum,
+    type: ruleType,
+    isActive: true,
+    startDate: { $lte: date },
+    endDate: { $gte: date },
+  })
+    .sort({ priority: -1 })
+    .lean()
+    .exec();
+
+  if (!rule) {
+    throw Object.assign(
+      new Error("No pricing configured for this site."),
+      { status: 400 },
+    );
+  }
+
+  const rate = rule.applyMode === "multiplier" ? (rule.multiplier ?? 1) * (rule.flatRate ?? 0) : (rule.flatRate ?? 0);
+  const label = rule.type === "holiday" ? "Holiday" : rule.type === "weekend" ? "Weekend" : "Regular";
+
+  return { rate, label };
+}
+
+// Calculate a reservation quote, evaluating EACH night separately against the
+// Pricing collection and summing the nightly rates. This is async because it
+// queries Pricing per night. Exported so both the create flow and the quote
+// endpoint can share the exact same logic.
+export async function calculateReservationPricing(
+  campsite: Pick<ICampsite, "campground" | "type">,
+  campsiteId: string,
+  campgroundId: string,
   checkIn: Date,
   checkOut: Date,
-) {
+): Promise<ReservationQuote> {
   if (checkOut <= checkIn) {
     throw Object.assign(new Error("Check-out date must be after check-in date."), { status: 400 });
   }
@@ -287,10 +367,16 @@ function calculateReservationPricing(
     throw Object.assign(new Error("Check-out date must be after check-in date."), { status: 400 });
   }
 
+  const campgroundObjId = new mongoose.Types.ObjectId(campgroundId);
+  const siteType = campsite.type;
+  const nightBreakdown: ReservationQuote["nightBreakdown"] = [];
   let subtotal = 0;
+
   const current = new Date(checkIn);
   for (let i = 0; i < nights; i += 1) {
-    subtotal += getNightlyRate(campsite, current);
+    const { rate, label } = await getNightlyRateFromPricing(campgroundObjId, siteType, current);
+    subtotal += rate;
+    nightBreakdown.push({ date: toLocalDateKey(current), rateLabel: label, rate });
     current.setDate(current.getDate() + 1);
   }
 
@@ -299,14 +385,36 @@ function calculateReservationPricing(
   const total = Math.round((subtotal + taxes) * 100) / 100;
 
   return {
-    baseRate: campsite.basePrice,
+    campground: campgroundId,
+    campsite: campsiteId,
+    siteType,
     nights,
+    nightBreakdown,
+    baseRate: subtotal,
     subtotal,
     taxes,
     fees: 0,
     discount: 0,
     total,
   };
+}
+
+// Public quote entrypoint: given a campsite + campground + dates, return the
+// calculated pricing breakdown from the Pricing rules collection.
+export async function quoteReservation(input: {
+  campsite: string;
+  campground: string;
+  checkIn: Date;
+  checkOut: Date;
+}): Promise<ReservationQuote> {
+  await ensureCampsiteAndCampgroundMatch(input.campsite, input.campground);
+
+  const campsite = await Campsite.findById(input.campsite).select("campground type").lean<Pick<ICampsite, "_id" | "campground" | "type">>().exec();
+  if (!campsite) {
+    throw Object.assign(new Error("Campsite not found."), { status: 404 });
+  }
+
+  return calculateReservationPricing(campsite, input.campsite, input.campground, input.checkIn, input.checkOut);
 }
 
 async function ensureManagerOwnsCampground(userId: string, campgroundId: string): Promise<void> {
@@ -333,14 +441,23 @@ export async function createReservation(
     await ensureManagerOwnsCampground(userId, input.campground);
   }
 
-  await ensureReservationDoesNotOverlap(input.campsite, input.checkIn, input.checkOut);
+await ensureReservationDoesNotOverlap(input.campsite, input.checkIn, input.checkOut);
 
-  const campsite = await Campsite.findById(input.campsite).select("basePrice weekendPrice").exec();
+  const campsite = await Campsite.findById(input.campsite).select("campground type").exec();
   if (!campsite) {
     throw Object.assign(new Error("Campsite not found."), { status: 404 });
   }
 
-  const pricing = calculateReservationPricing(campsite, input.checkIn, input.checkOut);
+  const quote = await calculateReservationPricing(campsite, input.campsite, input.campground, input.checkIn, input.checkOut);
+  const pricing = {
+    baseRate: quote.baseRate,
+    nights: quote.nights,
+    subtotal: quote.subtotal,
+    taxes: quote.taxes,
+    fees: quote.fees,
+    discount: quote.discount,
+    total: quote.total,
+  };
 
   return Reservation.create({
     customer: new mongoose.Types.ObjectId(userId),
@@ -424,7 +541,7 @@ export async function updateReservation(
     await ensureCampsiteAndCampgroundMatch(updatedCampsiteId, updatedCampgroundId);
     await ensureReservationDoesNotOverlap(updatedCampsiteId, updatedCheckIn, updatedCheckOut, id);
 
-    const campsite = await Campsite.findById(updatedCampsiteId).select("basePrice weekendPrice campground").exec();
+const campsite = await Campsite.findById(updatedCampsiteId).select("campground type").exec();
     if (!campsite) {
       throw Object.assign(new Error("Campsite not found."), { status: 404 });
     }
@@ -435,11 +552,20 @@ export async function updateReservation(
       });
     }
 
+    const quote = await calculateReservationPricing(campsite, updatedCampsiteId, updatedCampgroundId, updatedCheckIn, updatedCheckOut);
+    reservation.pricing = {
+      baseRate: quote.baseRate,
+      nights: quote.nights,
+      subtotal: quote.subtotal,
+      taxes: quote.taxes,
+      fees: quote.fees,
+      discount: quote.discount,
+      total: quote.total,
+    };
     reservation.campsite = new mongoose.Types.ObjectId(updatedCampsiteId);
     reservation.campground = new mongoose.Types.ObjectId(updatedCampgroundId);
     reservation.checkIn = updatedCheckIn;
     reservation.checkOut = updatedCheckOut;
-    reservation.pricing = calculateReservationPricing(campsite, updatedCheckIn, updatedCheckOut);
   }
 
   if (userRole === "manager" && input.campground) {

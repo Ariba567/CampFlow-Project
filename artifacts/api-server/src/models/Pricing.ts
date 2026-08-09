@@ -3,11 +3,13 @@ import mongoose, { Document, Schema, Model } from "mongoose";
 // ─── Main document interface ──────────────────────────────────────────────────
 export type PricingType = "seasonal" | "weekend" | "holiday" | "promotional";
 export type PricingApplyMode = "multiplier" | "flat_rate" | "override";
+export type SiteTypeEnum = "tent" | "rv" | "cabin" | "glamping" | "group";
 
 export interface IPricing extends Document {
   name: string;
   campground: mongoose.Types.ObjectId;
   campsite?: mongoose.Types.ObjectId;  // null = applies to all sites in campground
+  siteType?: SiteTypeEnum;             // which campsite type this rule applies to
   type: PricingType;
   applyMode: PricingApplyMode;
   multiplier?: number;    // e.g. 1.5 for 50% increase
@@ -43,6 +45,10 @@ const pricingSchema = new Schema<IPricing>(
       type: Schema.Types.ObjectId,
       ref: "Campsite",
       default: null,
+    },
+    siteType: {
+      type: String,
+      enum: ["tent", "rv", "cabin", "glamping", "group"],
     },
     type: {
       type: String,

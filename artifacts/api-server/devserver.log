@@ -1,0 +1,218 @@
+$ cross-env NODE_ENV=development pnpm run build && pnpm run start
+$ node ./build.mjs
+
+  dist\index.mjs                   4.5mb
+  dist\pino-worker.mjs           153.4kb
+  dist\pino-file.mjs             142.1kb
+  dist\pino-pretty.mjs           114.4kb
+  dist\thread-stream-worker.mjs    7.3kb
+  ...and 5 more output files...
+
+Done in 770ms
+$ node --enable-source-maps ./dist/index.mjs
+◇ injected env (7) from ..\..\.env // tip: ⌘ enable debugging { debug: true }
+◇ injected env (0) from ..\..\.env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+(node:18200) [MONGOOSE] Warning: Duplicate schema index on {"location":"2dsphere"} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18200) [MONGOOSE] Warning: Duplicate schema index on {"slug":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:18200) [MONGOOSE] Warning: Duplicate schema index on {"reservationNumber":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[16:12:07.862] [32mINFO[39m (18200): [36mCampFlow API server listening[39m
+    [35mport[39m: 5000
+    [35menv[39m: "development"
+[16:12:09.005] [32mINFO[39m (18200): [36mMongoDB connected[39m
+    [35mhost[39m: "ac-jueqnwe-shard-00-02.lzxejfn.mongodb.net"
+Sample campground seeding skipped: campgrounds already exist.
+[16:12:16.816] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 1,
+      "method": "GET",
+      "url": "/api/campgrounds"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 110
+[16:12:28.574] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 2,
+      "method": "GET",
+      "url": "/api/campgrounds/6a6fe5cba690e16146ee4c5b/campsites"
+    }
+    [35mres[39m: {
+      "statusCode": 404
+    }
+    [35mresponseTime[39m: 3
+[16:12:46.260] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 3,
+      "method": "GET",
+      "url": "/api/campsites"
+    }
+    [35mres[39m: {
+      "statusCode": 400
+    }
+    [35mresponseTime[39m: 3
+[16:13:39.916] [32mINFO[39m (18200): [36mNew user registered[39m
+    [35muserId[39m: "6a770f6323123f5d2d1cab65"
+[16:13:40.007] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 4,
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 653
+[16:13:40.207] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 5,
+      "method": "GET",
+      "url": "/api/campsites"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 174
+[16:13:40.452] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 6,
+      "method": "GET",
+      "url": "/api/reservations/quote"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 239
+[16:13:40.838] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 7,
+      "method": "GET",
+      "url": "/api/reservations/quote"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 384
+[16:13:41.147] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 8,
+      "method": "GET",
+      "url": "/api/reservations/quote"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 306
+[16:13:41.405] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 9,
+      "method": "GET",
+      "url": "/api/reservations/quote"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 240
+[16:13:41.893] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 10,
+      "method": "POST",
+      "url": "/api/reservations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 482
+[16:13:42.274] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 11,
+      "method": "GET",
+      "url": "/api/reservations/quote"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 377
+[16:13:42.875] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 12,
+      "method": "POST",
+      "url": "/api/reservations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 597
+[16:13:43.169] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 13,
+      "method": "GET",
+      "url": "/api/reservations/quote"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 290
+[16:13:43.690] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 14,
+      "method": "POST",
+      "url": "/api/reservations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 519
+[16:18:10.882] [32mINFO[39m (18200): [36mUser logged in[39m
+    [35muserId[39m: "6a770f6323123f5d2d1cab65"
+[16:18:10.882] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 15,
+      "method": "POST",
+      "url": "/api/auth/login"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 545
+[16:18:11.054] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 16,
+      "method": "GET",
+      "url": "/api/reservations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 161
+[16:18:11.295] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 17,
+      "method": "DELETE",
+      "url": "/api/reservations/6a770f6723123f5d2d1cab98"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 238
+[16:18:11.529] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 18,
+      "method": "DELETE",
+      "url": "/api/reservations/6a770f6623123f5d2d1cab8c"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 230
+[16:18:11.763] [32mINFO[39m (18200): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 19,
+      "method": "DELETE",
+      "url": "/api/reservations/6a770f6523123f5d2d1cab7e"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 231

@@ -68,6 +68,15 @@ const reservationListSchema = paginationSchema.extend({
 });
 
 router.get("/", authenticate, authorize("customer", "manager", "admin"), validate(reservationListSchema, "query"), reservationController.listReservations);
+
+const quoteSchema = z.object({
+  campground: z.string().min(1, "Campground is required"),
+  campsite: z.string().min(1, "Campsite is required"),
+  checkIn: z.preprocess(dateStringToDate, z.date()),
+  checkOut: z.preprocess(dateStringToDate, z.date()),
+});
+router.get("/quote", authenticate, authorize("customer", "manager", "admin"), validate(quoteSchema, "query"), reservationController.quoteReservation);
+
 router.get("/:id", authenticate, authorize("customer", "manager", "admin"), validate(mongoIdSchema, "params"), reservationController.getReservation);
 
 router.post("/", authenticate, authorize("customer", "manager", "admin"), validate(createReservationSchema), reservationController.createReservation);

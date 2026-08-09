@@ -11,6 +11,7 @@ export async function listCampsites(campground?: string, type?: string) { return
 export async function listPricingRules(params: Record<string, unknown> = {}) { return (await api.get<Page<ApiItem>>('/pricing', { params: { page: 1, limit: 100, ...params } })).data; }
 export async function listReservations(params: Record<string, unknown> = {}) { return (await api.get<Page<ApiItem>>('/reservations', { params: { page: 1, limit: 100, ...params } })).data; }
 export async function getReservation(id: string) { return (await api.get<{ data: ApiItem }>(`/reservations/${id}`)).data.data; }
+export async function quoteReservation(params: { campground?: string; campsite?: string; checkIn: string; checkOut: string }) { return (await api.get<{ data: ApiItem }>('/reservations/quote', { params })).data.data; }
 export async function createReservation(input: ApiItem) { return (await api.post<{ data: ApiItem }>('/reservations', input)).data.data; }
 export async function updateReservation(id: string, input: ApiItem) { return (await api.patch<{ data: ApiItem }>(`/reservations/${id}`, input)).data.data; }
 export async function cancelReservation(id: string) { return (await api.patch<{ data: ApiItem }>(`/reservations/${id}/cancel`)).data.data; }
