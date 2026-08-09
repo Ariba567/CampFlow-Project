@@ -77,6 +77,14 @@ const quoteSchema = z.object({
 });
 router.get("/quote", authenticate, authorize("customer", "manager", "admin"), validate(quoteSchema, "query"), reservationController.quoteReservation);
 
+const availabilitySchema = z.object({
+  campground: z.string().min(1, "Campground is required"),
+  campsite: z.string().min(1, "Campsite is required"),
+  checkIn: z.preprocess(dateStringToDate, z.date()),
+  checkOut: z.preprocess(dateStringToDate, z.date()),
+});
+router.get("/availability", authenticate, authorize("customer", "manager", "admin"), validate(availabilitySchema, "query"), reservationController.checkAvailability);
+
 router.get("/:id", authenticate, authorize("customer", "manager", "admin"), validate(mongoIdSchema, "params"), reservationController.getReservation);
 
 router.post("/", authenticate, authorize("customer", "manager", "admin"), validate(createReservationSchema), reservationController.createReservation);

@@ -21,6 +21,21 @@ export async function listReservations(req: Request, res: Response): Promise<voi
   }
 }
 
+export async function checkAvailability(req: Request, res: Response): Promise<void> {
+  try {
+    const result = await reservationService.checkReservationAvailability({
+      campsite: String(req.query.campsite ?? req.body.campsite ?? ""),
+      campground: String(req.query.campground ?? req.body.campground ?? ""),
+      checkIn: new Date(String(req.query.checkIn ?? req.body.checkIn ?? "")),
+      checkOut: new Date(String(req.query.checkOut ?? req.body.checkOut ?? "")),
+    });
+    res.status(200).json({ data: result });
+  } catch (err: unknown) {
+    const error = err as Error & { status?: number };
+    res.status(error.status ?? 500).json({ error: error.message ?? "Failed to check campsite availability." });
+  }
+}
+
 export async function quoteReservation(req: Request, res: Response): Promise<void> {
   try {
     const quote = await reservationService.quoteReservation({

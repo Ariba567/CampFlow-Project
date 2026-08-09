@@ -1,19 +1,32 @@
-# Pricing & Booking Window Extension (through 2030)
+# CampFlow Tasks
 
-## Requirement
-Extend the pricing/booking active window so that a booking for 01/01/2027 (and later) works correctly, and ensure the holiday (incl. Easter) date list matches the extended window.
+## Task 1 — Fix Scroll Position Not Resetting on Navigation
+- [x] Created `artifacts/campflow/src/components/common/ScrollToTop.tsx`
+  - Uses `useLocation()` from react-router-dom
+  - Calls `window.scrollTo(0, 0)` on every `pathname` change (not hash-only changes, so same-page anchors are unaffected)
+- [x] Mounted `<ScrollToTop />` once inside `<BrowserRouter>` in `App.tsx` (global, one-time fix for every route change)
+- [x] Confirmed fix: scroll down on one page → click through to a detail page → detail page loads at the top
 
-## Status
-- [x] Diagnosed the 2027 booking failure (no pricing rule in the active window)
-- [x] Seeded/updated pricing rules so the active window extends through 2030
-- [x] Confirmed no remaining "unpriced" rules at 2026-12-31 (0 remain)
-- [x] Verified the 01/01/2027 → 01/02/2027 RV booking: quote now returns **$63.80** (1 night @ $58 Regular + $5.80 tax)
-- [x] Checked the Easter holiday list — this was still pending in `reservationService.ts`
-- [x] Added Easter Sundays 2027–2030 (2027-03-28, 2028-04-16, 2029-04-01, 2030-04-21) to `HOLIDAY_DATES_ISO`
-- [x] Extended New Year's Day and Christmas dates through 2030 in `HOLIDAY_DATES_ISO`
-- [x] Cleaned up temporary verification scripts (`extendPricingEndDate.ts`, `verifyBooking2027.ts`, `queryRVEndDate.ts`)
-- [x] TypeScript typecheck passes (no errors)
+## Task 2 — "Explore [Site Type]" buttons scroll/filter to same campground "Where to stay"
+- [x] `CampsiteCategories.tsx`: added optional `onExplore?: (type: SiteType) => void` prop; renders `<button>` calling `onExplore(type)` instead of `<Link>`
+- [x] `campground-detail.tsx`: `filterType` state + `handleExplore(type)` sets filter and smooth-scrolls to `#where-to-stay`; added `id="where-to-stay"`; filtered site rendering + "Show all sites" reset
+- [x] Did NOT change "Where to stay", interactive map, or anything else
 
-## Files changed
-- `artifacts/api-server/src/services/reservationService.ts` — holiday date list extended to cover 2027–2030 (Easter, New Year's Day, Christmas)
-- `artifacts/api-server/src/scripts/seedPricing.ts` — pricing rules window extended through 2030
+## Task 3 — Hide Unavailable Site-Type Cards + Empty-State Safety Net
+- [x] `availableTypes` useMemo (distinct site `type` values from real `sites` inventory, fallback to `campsiteTypes(campground)`)
+- [x] Card only appears if campground has ≥1 real site of that type; empty filter shows clear message + "Show all sites" link
+- [x] Applied consistently across all campgrounds
+
+## Task 4 — Fix Non-Functional "Check" Availability Button (reservation form)
+### Backend
+- [x] `reservationService.ts`: added `checkReservationAvailability(input)` — validates campsite↔campground match + reuses `ensureReservationDoesNotOverlap(...)`; returns `{ available: true, message }` when free, throws 409 on conflict. Non-destructive (no reservation created).
+- [x] `reservationController.ts`: added `checkAvailability` handler
+- [x] `routes/reservations.ts`: added `GET /reservations/availability` (zod `availabilitySchema`), placed BEFORE `/:id` to avoid route shadowing
+### Frontend
+- [x] `customerDashboardService.ts`: added `checkCampsiteAvailability(params)` calling the new endpoint
+- [x] `reservation.tsx`: added `availabilityChecking` + `availabilityResult` state; rewrote `checkAvailability()` to validate campground+campsite+dates then call `checkCampsiteAvailability(...)`; shows green "Available for these dates" / red "Not available…" message; button shows spinner while checking
+### Verification
+- [x] `pnpm typecheck` (frontend) — exit 0
+- [x] `pnpm typecheck` (api-server) — exit 0
+- [x] `pnpm build` (frontend production build) — exit 0 (non-fatal sourcemap warnings from third-party UI components)
+- [x] Confirmed: available site → success message; conflicting site → conflict message (409)

@@ -399,6 +399,27 @@ export async function calculateReservationPricing(
   };
 }
 
+// Non-destructive availability check: validates the campsite belongs to the
+// campground and that no un-cancelled reservation overlaps the requested dates.
+// Reuses the exact same overlap logic used when creating a reservation, but does
+// NOT create or modify any reservation. Throws a 409 on conflict.
+export async function checkReservationAvailability(input: {
+  campsite: string;
+  campground: string;
+  checkIn: Date;
+  checkOut: Date;
+}): Promise<{ available: true; message: string }> {
+  await ensureCampsiteAndCampgroundMatch(input.campsite, input.campground);
+
+  if (input.checkOut <= input.checkIn) {
+    throw Object.assign(new Error("Check-out date must be after check-in date."), { status: 400 });
+  }
+
+  await ensureReservationDoesNotOverlap(input.campsite, input.checkIn, input.checkOut);
+
+  return { available: true, message: "Available for these dates" };
+}
+
 // Public quote entrypoint: given a campsite + campground + dates, return the
 // calculated pricing breakdown from the Pricing rules collection.
 export async function quoteReservation(input: {
