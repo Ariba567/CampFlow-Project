@@ -4,6 +4,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/common/ProtectedRoute';
 import GuestRoute from '@/components/common/GuestRoute';
 import Layout from '@/components/common/Layout';
+import ScrollToTop from '@/components/common/ScrollToTop';
 import PagePlaceholder from '@/components/common/PagePlaceholder';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -41,8 +42,9 @@ const OperationsLayout = lazy(() => import('@/components/operations/OperationsLa
 function Router() {
   const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
 
-  return (
+return (
     <BrowserRouter basename={basename}>
+      <ScrollToTop />
       <Suspense fallback={<div className="min-h-[50vh] px-4 py-20 text-center text-muted-foreground">Loading page…</div>}>
         <Routes>
           <Route path="/" element={<Layout><Home /></Layout>} />
