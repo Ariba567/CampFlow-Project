@@ -1,46 +1,20 @@
 import mongoose from "mongoose";
 import Review, { IReview } from "../models/Review";
-import Reservation, { ReservationStatus } from "../models/Reservation";
 import Campground from "../models/Campground";
-import Campsite from "../models/Campsite";
-import { UserRole } from "../models/User";
+import Reservation from "../models/Reservation";
+import User, { UserRole } from "../models/User";
 
+// ─── Input types ─────────────────────────────────────────────────────────────
 export interface ReviewCreateInput {
   campground: string;
-  campsite?: string;
-  reservation: string;
-  overallRating: number;
-  ratingBreakdown: {
-    cleanliness: number;
-    facilities: number;
-    location: number;
-    value: number;
-    staff: number;
-  };
-  title: string;
-  body: string;
-  images?: string[];
-  ownerResponse?: string;
-  isApproved?: boolean;
-  isHidden?: boolean;
+  reservationId: string;
+  rating: number;
+  comment: string;
 }
 
-export type ReviewUpdateInput = Partial<ReviewCreateInput>;
-
-export interface ReviewQueryOptions {
-  page: number;
-  limit: number;
-  sort?: "createdAt" | "overallRating" | "helpfulVotes";
-  order: "asc" | "desc";
-  search?: string;
-  campground?: string;
-  campsite?: string;
-  reservation?: string;
-  customer?: string;
-  isApproved?: boolean;
-  isHidden?: boolean;
-  minRating?: number;
-  maxRating?: number;
+export interface ReviewUpdateInput {
+  rating?: number;
+  comment?: string;
 }
 
 export interface PaginatedResult<T> {
@@ -51,111 +25,124 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
-function buildFilters(options: ReviewQueryOptions) {
-  const filters: Record<string, unknown> = {};
+// ─── Recalculate campground aggregate rating ───────────────────────────────────
+async function recalculateCampgroundRating(campgroundId: string): Promise<void> {
+  const stats = await Review.aggregate([
+    { $match: { campground: new mongoose.Types.ObjectId(campgroundId) } },
+    {
+      $group: {
+        _id: null,
+        average: { $avg: "$rating" },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
 
-  if (options.campground && mongoose.isValidObjectId(options.campground)) {
-    filters.campground = new mongoose.Types.ObjectId(options.campground);
-  }
+  const average = Math.round((stats[0]?.average ?? 0) * 10) / 10;
+  const count = stats[0]?.count ?? 0;
 
-  if (options.campsite && mongoose.isValidObjectId(options.campsite)) {
-    filters.campsite = new mongoose.Types.ObjectId(options.campsite);
-  }
-
-  if (options.reservation && mongoose.isValidObjectId(options.reservation)) {
-    filters.reservation = new mongoose.Types.ObjectId(options.reservation);
-  }
-
-  if (options.customer && mongoose.isValidObjectId(options.customer)) {
-    filters.customer = new mongoose.Types.ObjectId(options.customer);
-  }
-
-  if (typeof options.isApproved === "boolean") {
-    filters.isApproved = options.isApproved;
-  }
-
-  if (typeof options.isHidden === "boolean") {
-    filters.isHidden = options.isHidden;
-  }
-
-  if (typeof options.minRating === "number" || typeof options.maxRating === "number") {
-    filters.overallRating = {} as Record<string, number>;
-    if (typeof options.minRating === "number") {
-      (filters.overallRating as Record<string, number>).$gte = options.minRating;
-    }
-    if (typeof options.maxRating === "number") {
-      (filters.overallRating as Record<string, number>).$lte = options.maxRating;
-    }
-  }
-
-  if (options.search?.trim()) {
-    const term = options.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(term, "i");
-    filters.$or = [
-      { title: regex },
-      { body: regex },
-      { ownerResponse: regex },
-    ];
-  }
-
-  return filters;
+  await Campground.findByIdAndUpdate(campgroundId, {
+    "rating.average": average,
+    "rating.count": count,
+  }).exec();
 }
 
-function buildSort(options: ReviewQueryOptions): Record<string, number> {
-  const field = options.sort === "overallRating"
-    ? "overallRating"
-    : options.sort === "helpfulVotes"
-      ? "helpfulVotes"
-      : "createdAt";
-
-  return { [field]: options.order === "asc" ? 1 : -1 };
+// ─── Check review eligibility for a customer at a campground ─────────────────
+export interface EligibilityResult {
+  eligible: boolean;
+  reservationId: string | null;
 }
 
-async function getManagerCampgroundIds(userId: string) {
-  const campgrounds = await Campground.find({ manager: userId }).select("_id");
-  return campgrounds.map((campground) => campground._id);
+export async function checkReviewEligibility(
+  campgroundId: string,
+  customerId: string,
+): Promise<EligibilityResult> {
+  if (!mongoose.isValidObjectId(campgroundId)) {
+    throw Object.assign(new Error("Invalid campground ID."), { status: 400 });
+  }
+
+  const reservation = await Reservation.findOne({
+    customer: customerId,
+    campground: campgroundId,
+    status: "completed",
+  })
+    .sort({ createdAt: -1 })
+    .select("_id")
+    .lean()
+    .exec();
+
+  if (!reservation) {
+    return { eligible: false, reservationId: null };
+  }
+
+  return { eligible: true, reservationId: String(reservation._id) };
 }
 
-export async function listReviews(
-  options: ReviewQueryOptions,
-  userId: string,
+// ─── List reviews by campground (public) ──────────────────────────────────────
+export interface CampgroundReviewsResult {
+  data: IReview[];
+  averageRating: number | null;
+  totalReviews: number;
+}
+
+export async function listReviewsByCampground(campgroundId: string): Promise<CampgroundReviewsResult> {
+  if (!mongoose.isValidObjectId(campgroundId)) {
+    throw Object.assign(new Error("Invalid campground ID."), { status: 400 });
+  }
+
+  const campground = await Campground.findById(campgroundId).select("_id").exec();
+  if (!campground) {
+    throw Object.assign(new Error("Campground not found."), { status: 404 });
+  }
+
+  const [data, stats] = await Promise.all([
+    Review.find({ campground: campgroundId })
+      .sort({ createdAt: -1 })
+      .populate("customer", "firstName lastName email")
+      .exec(),
+    Review.aggregate([
+      { $match: { campground: new mongoose.Types.ObjectId(campgroundId) } },
+      {
+        $group: {
+          _id: null,
+          average: { $avg: "$rating" },
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+  ]);
+
+  const averageRating = stats[0]?.average ?? null;
+  const totalReviews = stats[0]?.count ?? 0;
+
+  return { data, averageRating, totalReviews };
+}
+
+// ─── List reviews by customer ─────────────────────────────────────────────────
+export async function listReviewsByCustomer(
+  customerId: string,
+  requestingUserId: string,
   userRole: UserRole,
+  options: { page: number; limit: number },
 ): Promise<PaginatedResult<IReview>> {
-  const filters = buildFilters(options);
-
-  if (userRole === "customer") {
-    filters.customer = new mongoose.Types.ObjectId(userId);
+  if (!mongoose.isValidObjectId(customerId)) {
+    throw Object.assign(new Error("Invalid customer ID."), { status: 400 });
   }
 
-  if (userRole === "manager") {
-    const ownedCampgrounds = await getManagerCampgroundIds(userId);
-    if (ownedCampgrounds.length === 0) {
-      return { data: [], total: 0, page: options.page, limit: options.limit, totalPages: 1 };
-    }
-
-    if (options.campground && !ownedCampgrounds.some((id) => id.equals(options.campground))) {
-      throw Object.assign(new Error("Access denied. You can only view reviews for your own campgrounds."), {
-        status: 403,
-      });
-    }
-
-    filters.campground = { $in: ownedCampgrounds };
+  if (userRole === "customer" && customerId !== requestingUserId) {
+    throw Object.assign(new Error("Access denied. You can only view your own reviews."), { status: 403 });
   }
 
-  const sort = buildSort(options);
   const skip = (options.page - 1) * options.limit;
-
   const [data, total] = await Promise.all([
-    Review.find(filters)
-      .sort(sort as any)
+    Review.find({ customer: customerId })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(options.limit)
-      .populate("customer", "firstName lastName email")
       .populate("campground", "name slug")
-      .populate("campsite", "name siteNumber")
-      .populate("reservation", "reservationNumber")
+      .populate("customer", "firstName lastName email")
       .exec(),
-    Review.countDocuments(filters),
+    Review.countDocuments({ customer: customerId }),
   ]);
 
   return {
@@ -167,193 +154,140 @@ export async function listReviews(
   };
 }
 
-export async function getReviewById(
-  id: string,
-  userId: string,
-  userRole: UserRole,
-): Promise<IReview> {
-  if (!mongoose.isValidObjectId(id)) {
-    throw Object.assign(new Error("Invalid review ID."), { status: 400 });
-  }
-
-  const review = await Review.findById(id)
-    .populate("customer", "firstName lastName email")
-    .populate("campground", "name slug manager")
-    .populate("campsite", "name siteNumber")
-    .populate("reservation", "reservationNumber")
-    .exec();
-
-  if (!review) {
-    throw Object.assign(new Error("Review not found."), { status: 404 });
-  }
-
-  if (userRole === "customer" && String(review.customer._id) !== userId) {
-    throw Object.assign(new Error("Access denied. You can only view your own reviews."), { status: 403 });
-  }
-
-  if (userRole === "manager") {
-    const campground = (review.campground as any) as { manager: mongoose.Types.ObjectId };
-    if (!campground || String(campground.manager) !== userId) {
-      throw Object.assign(new Error("Access denied. You can only view reviews for your own campgrounds."), {
-        status: 403,
-      });
-    }
-  }
-
-  return review;
-}
-
-async function ensureReservationBelongsToCustomer(reservationId: string, userId: string) {
-  const reservation = await Reservation.findById(reservationId).select("customer campground campsite");
-  if (!reservation) {
-    throw Object.assign(new Error("Reservation not found."), { status: 404 });
-  }
-
-  if (String(reservation.customer) !== userId) {
-    throw Object.assign(new Error("Access denied. You can only review your own reservations."), { status: 403 });
-  }
-
-  return reservation;
-}
-
-async function validateReviewRelations(
-  campgroundId: string,
-  campsiteId: string | undefined,
-  reservationId: string,
-): Promise<void> {
-  const reservation = await Reservation.findById(reservationId).select("campground campsite");
-  if (!reservation) {
-    throw Object.assign(new Error("Reservation not found."), { status: 404 });
-  }
-
-  if (String(reservation.campground) !== campgroundId) {
-    throw Object.assign(new Error("The reservation does not belong to the specified campground."), {
-      status: 400,
-    });
-  }
-
-  if (campsiteId) {
-    if (!reservation.campsite || String(reservation.campsite) !== campsiteId) {
-      throw Object.assign(new Error("The reservation does not belong to the specified campsite."), {
-        status: 400,
-      });
-    }
-
-    const campsite = await Campsite.findById(campsiteId).select("campground");
-    if (!campsite) {
-      throw Object.assign(new Error("Campsite not found."), { status: 404 });
-    }
-
-    if (String(campsite.campground) !== campgroundId) {
-      throw Object.assign(new Error("The campsite does not belong to the specified campground."), {
-        status: 400,
-      });
-    }
-  }
-}
-
-async function ensureManagerOwnsCampground(userId: string, campgroundId: string): Promise<void> {
-  const campground = await Campground.findById(campgroundId).select("manager");
-  if (!campground) {
-    throw Object.assign(new Error("Campground not found."), { status: 404 });
-  }
-
-  if (String(campground.manager) !== userId) {
-    throw Object.assign(new Error("Access denied. You can only manage reviews for your own campgrounds."), {
-      status: 403,
-    });
-  }
-}
-
+// ─── Create review (upsert: one per customer per campground) ──────────────────
 export async function createReview(
   input: ReviewCreateInput,
   userId: string,
   userRole: UserRole,
 ): Promise<IReview> {
-  if (userRole === "customer") {
-    const reservation = await ensureReservationBelongsToCustomer(input.reservation, userId);
-    if (String(reservation.campground) !== input.campground) {
-      throw Object.assign(new Error("The reservation does not belong to the specified campground."), {
-        status: 400,
-      });
-    }
-    if (input.campsite && reservation.campsite && String(reservation.campsite) !== input.campsite) {
-      throw Object.assign(new Error("The reservation does not belong to the specified campsite."), {
-        status: 400,
-      });
-    }
+  if (userRole !== "customer") {
+    throw Object.assign(new Error("Only customers can create reviews."), { status: 403 });
   }
 
-  await validateReviewRelations(input.campground, input.campsite, input.reservation);
+  if (!mongoose.isValidObjectId(input.campground)) {
+    throw Object.assign(new Error("Invalid campground ID."), { status: 400 });
+  }
 
-  return Review.create({
-    ...input,
-    customer: new mongoose.Types.ObjectId(userId),
-  });
+  if (!mongoose.isValidObjectId(input.reservationId)) {
+    throw Object.assign(new Error("Invalid reservation ID."), { status: 400 });
+  }
+
+  const reservation = await Reservation.findById(input.reservationId)
+    .select("customer campground status")
+    .exec();
+
+  if (!reservation) {
+    throw Object.assign(new Error("Reservation not found."), { status: 404 });
+  }
+
+  if (String(reservation.customer) !== userId) {
+    throw Object.assign(new Error("This reservation does not belong to you."), { status: 403 });
+  }
+
+  if (String(reservation.campground) !== input.campground) {
+    throw Object.assign(new Error("This reservation is not for the specified campground."), { status: 400 });
+  }
+
+  if (reservation.status !== "completed") {
+    throw Object.assign(new Error("You can only review campgrounds you have completed a stay at."), { status: 403 });
+  }
+
+  const campground = await Campground.findById(input.campground).select("_id").exec();
+  if (!campground) {
+    throw Object.assign(new Error("Campground not found."), { status: 404 });
+  }
+
+  const customerObjectId = new mongoose.Types.ObjectId(userId);
+  const reservationObjectId = new mongoose.Types.ObjectId(input.reservationId);
+
+  // Upsert: if the customer already has a review for this campground, update it
+  const existing = await Review.findOne({
+    customer: customerObjectId,
+    campground: input.campground,
+  }).exec();
+
+  if (existing) {
+    existing.rating = input.rating;
+    existing.comment = input.comment;
+    existing.reservationId = reservationObjectId;
+    await existing.save();
+  } else {
+    const review = await Review.create({
+      customer: customerObjectId,
+      campground: input.campground,
+      reservationId: reservationObjectId,
+      rating: input.rating,
+      comment: input.comment,
+    });
+    await recalculateCampgroundRating(input.campground);
+    return review.populate("campground", "name slug");
+  }
+
+  await recalculateCampgroundRating(input.campground);
+  return existing.populate("campground", "name slug");
 }
 
+// ─── Update review (only author) ──────────────────────────────────────────────
 export async function updateReview(
   id: string,
   input: ReviewUpdateInput,
   userId: string,
   userRole: UserRole,
 ): Promise<IReview> {
-  const review = await Review.findById(id).populate("campground", "manager").populate("customer", "_id").exec();
+  if (userRole !== "customer") {
+    throw Object.assign(new Error("Only customers can update reviews."), { status: 403 });
+  }
+
+  if (!mongoose.isValidObjectId(id)) {
+    throw Object.assign(new Error("Invalid review ID."), { status: 400 });
+  }
+
+  const review = await Review.findById(id).populate("campground", "manager").exec();
   if (!review) {
     throw Object.assign(new Error("Review not found."), { status: 404 });
   }
 
-  if (userRole === "customer" && String(review.customer._id) !== userId) {
+  if (String(review.customer) !== userId) {
     throw Object.assign(new Error("Access denied. You can only update your own reviews."), { status: 403 });
   }
 
-  if (userRole === "manager") {
-    const campground = (review.campground as any) as { manager: mongoose.Types.ObjectId };
-    if (!campground || String(campground.manager) !== userId) {
-      throw Object.assign(new Error("Access denied. You can only update reviews for your own campgrounds."), {
-        status: 403,
-      });
-    }
+  if (input.rating !== undefined) {
+    review.rating = input.rating;
+  }
+  if (input.comment !== undefined) {
+    review.comment = input.comment;
   }
 
-  if (input.reservation || input.campground || input.campsite) {
-    const campgroundId = input.campground ? input.campground : String(review.campground._id);
-    const campsiteId = input.campsite ? input.campsite : review.campsite ? String(review.campsite) : undefined;
-    const reservationId = input.reservation ? input.reservation : String(review.reservation);
-    await validateReviewRelations(campgroundId, campsiteId, reservationId);
-  }
-
-  if (userRole === "manager" && input.campground) {
-    await ensureManagerOwnsCampground(userId, input.campground);
-  }
-
-  Object.assign(review, input);
   await review.save();
-  return review;
+  await recalculateCampgroundRating(String(review.campground._id));
+
+  return review.populate("campground", "name slug");
 }
 
+// ─── Delete review (only author) ──────────────────────────────────────────────
 export async function deleteReview(
   id: string,
   userId: string,
   userRole: UserRole,
 ): Promise<void> {
-  const review = await Review.findById(id).populate("campground", "manager").populate("customer", "_id").exec();
+  if (userRole !== "customer") {
+    throw Object.assign(new Error("Only customers can delete reviews."), { status: 403 });
+  }
+
+  if (!mongoose.isValidObjectId(id)) {
+    throw Object.assign(new Error("Invalid review ID."), { status: 400 });
+  }
+
+  const review = await Review.findById(id).exec();
   if (!review) {
     throw Object.assign(new Error("Review not found."), { status: 404 });
   }
 
-  if (userRole === "customer" && String(review.customer._id) !== userId) {
+  if (String(review.customer) !== userId) {
     throw Object.assign(new Error("Access denied. You can only delete your own reviews."), { status: 403 });
   }
 
-  if (userRole === "manager") {
-    const campground = (review.campground as any) as { manager: mongoose.Types.ObjectId };
-    if (!campground || String(campground.manager) !== userId) {
-      throw Object.assign(new Error("Access denied. You can only delete reviews for your own campgrounds."), {
-        status: 403,
-      });
-    }
-  }
-
+  const campgroundId = String(review.campground);
   await review.deleteOne();
+  await recalculateCampgroundRating(campgroundId);
 }

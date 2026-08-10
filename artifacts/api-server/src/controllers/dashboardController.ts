@@ -121,6 +121,19 @@ export async function customerStats(req: Request, res: Response): Promise<void> 
   }
 }
 
+export async function customerReviews(req: Request, res: Response): Promise<void> {
+  try {
+    const q = req.query as unknown as any;
+    const page = Number(q.page ?? 1);
+    const limit = Number(q.limit ?? 20);
+    const result = await dashboardService.listCustomerReviews(req.user!.id, { page, limit });
+    res.status(200).json({ data: result.data, meta: { total: result.total, page: result.page, limit: result.limit, totalPages: result.totalPages } });
+  } catch (err: unknown) {
+    const error = err as Error & { status?: number };
+    res.status(error.status ?? 500).json({ error: error.message ?? "Failed to list reviews." });
+  }
+}
+
 // Manager endpoints
 export async function managerSummary(req: Request, res: Response): Promise<void> {
   try {

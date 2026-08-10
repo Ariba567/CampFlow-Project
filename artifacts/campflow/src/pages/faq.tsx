@@ -6,12 +6,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { usePageMetadata } from '@/hooks/usePageMetadata';
 
 const questions = [
-  ['When can I check in and check out?', 'RV and tent-site check-in begins at 2 p.m.; cabins and glamping tents are ready from 4 p.m. Check-out is 11 a.m. Please contact your campground if you need to arrange a different time.'],
-  ['Are pets welcome?', 'Yes—well-behaved pets are welcome at most RV and tent sites. A few cabins are pet-friendly, too. Keep pets leashed, attended, and away from shared indoor amenities.'],
-  ['Do you have full-hookup RV sites?', 'Many of our RV sites include water, electric, and sewer hookups. Available hookup types and site lengths are listed with each campground location.'],
-  ['Can I make a group reservation?', 'Absolutely. For family reunions, scout trips, and other groups, contact our camping team with your dates, group size, and preferred location.'],
-  ['What should I bring for a tent site?', 'Bring your tent, sleeping gear, lighting, weather-ready clothing, and camp kitchen basics. Each location page notes whether a site includes a picnic table, fire ring, or nearby water access.'],
-  ['What happens if I need to cancel?', 'Cancellation policies vary by stay type and season. Your booking confirmation will show the exact terms; please contact us as soon as possible if plans change.'],
+  ['How do I make a reservation?', 'Browse campgrounds, pick a site, choose your dates, and confirm your reservation online — no phone call needed. You\'ll get a confirmation once it\'s booked.'],
+  ['What is your cancellation policy?', 'You can cancel or modify a reservation from your account dashboard. Refund eligibility depends on how close to your arrival date you cancel.'],
+  ['Are pets allowed at your campgrounds?', 'Most of our sites are pet-friendly. Check the specific campground\'s amenities section before booking to confirm.'],
+  ['What amenities are included with each site type?', 'RV sites include water and electric hookups. Cabins and glamping tents come furnished. Tent sites are shaded, basic sites close to nature. Full details are listed on each campground\'s page.'],
+  ['Do I need to bring my own RV, or do you provide one?', 'Our RV sites are for guests bringing their own RV or trailer — we don\'t currently rent RVs. Cabins and glamping tents are fully set up and ready to use.'],
+  ['Is Wi-Fi available at the campgrounds?', 'Availability varies by location. Check the specific campground\'s amenities list for details before your trip.'],
+  ['What are your check-in and check-out times?', 'Standard check-in and check-out times are shown during the reservation process for each site.'],
+  ['Do you offer discounts for longer stays or group bookings?', 'Seasonal and promotional pricing is set by each campground and shown on the Pricing page. For group trips, reach out through the Contact page.'],
 ];
 
 export default function FAQ() {

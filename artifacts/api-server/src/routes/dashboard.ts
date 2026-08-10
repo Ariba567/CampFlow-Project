@@ -35,6 +35,7 @@ router.get("/customer/activities", authenticate, authorize("customer"), validate
 router.get("/customer/notifications", authenticate, authorize("customer"), validate(paginationSchema, "query"), dashboardController.customerNotifications);
 router.get("/customer/payments", authenticate, authorize("customer"), validate(paginationSchema, "query"), dashboardController.customerPayments);
 router.get("/customer/stats", authenticate, authorize("customer"), dashboardController.customerStats);
+router.get("/customer/reviews", authenticate, authorize("customer"), validate(paginationSchema, "query"), dashboardController.customerReviews);
 
 // Manager routes
 router.get("/manager/summary", authenticate, authorize("manager"), dashboardController.managerSummary);

@@ -142,6 +142,21 @@ export async function getCustomerDashboardStats(userId: string) {
   return { totalReservations, totalPayments, totalNotifications };
 }
 
+export async function listCustomerReviews(userId: string, options: { page: number; limit: number; }) {
+  const skip = (options.page - 1) * options.limit;
+  const [data, total] = await Promise.all([
+    Review.find({ customer: userId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(options.limit)
+      .populate("campground", "name slug")
+      .populate("customer", "firstName lastName email")
+      .exec(),
+    Review.countDocuments({ customer: userId }),
+  ]);
+  return { data, total, page: options.page, limit: options.limit, totalPages: Math.max(Math.ceil(total / options.limit), 1) };
+}
+
 // ----------------- Manager dashboards -----------------
 export async function getManagerSummary(userId: string) {
   // campgrounds owned by manager

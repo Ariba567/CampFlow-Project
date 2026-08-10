@@ -22,8 +22,17 @@ export async function removeFavorite(campsiteId: string) { return (await api.del
 export async function createContact(input: ApiItem) { return (await api.post<{ data: ApiItem }>('/contact', input)).data.data; }
 export async function listPayments() { return (await api.get<Page<ApiItem>>('/payments', { params: { page: 1, limit: 100 } })).data; }
 export async function listNotifications() { return (await api.get<Page<ApiItem>>('/notifications', { params: { page: 1, limit: 100 } })).data; }
-export async function listReviews() { return (await api.get<Page<ApiItem>>('/reviews', { params: { page: 1, limit: 100 } })).data; }
+export async function listCampgroundReviews(campgroundId: string) {
+  const resp = await api.get<{ data: ApiItem[]; averageRating: number | null; totalReviews: number }>(`/reviews/campground/${campgroundId}`);
+  return resp.data;
+}
+export async function checkReviewEligibility(campgroundId: string) {
+  return (await api.get<{ data: { eligible: boolean; reservationId: string | null } }>(`/reviews/eligibility/${campgroundId}`)).data.data;
+}
+export async function listCustomerReviews() { return (await api.get<Page<ApiItem>>('/dashboard/customer/reviews', { params: { page: 1, limit: 100 } })).data; }
 export async function createReview(input: ApiItem) { return (await api.post<{ data: ApiItem }>('/reviews', input)).data.data; }
+export async function updateReview(reviewId: string, input: ApiItem) { return (await api.put<{ data: ApiItem }>(`/reviews/${reviewId}`, input)).data.data; }
+export async function deleteReview(reviewId: string) { return (await api.delete(`/reviews/${reviewId}`)).data; }
 export const apiError = (error: any, fallback: string) => String(error?.response?.data?.error ?? fallback);
 export type UiNotification = { id: string; title: string; message: string; type: 'booking_confirmation' | 'booking_cancellation' | 'payment_confirmation'; createdAt: string; dedupeKey?: string };
 const UI_NOTIFICATIONS_KEY = 'campflow_ui_notifications';

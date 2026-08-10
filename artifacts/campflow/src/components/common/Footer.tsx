@@ -1,4 +1,5 @@
 import { Facebook, Heart, Instagram, Mail, MapPin, Phone, Trees } from 'lucide-react';
+import { contactInfo } from '@/config/contact';
 
 export default function Footer() {
   return (
@@ -14,9 +15,9 @@ export default function Footer() {
         <div>
           <h2 className="font-semibold text-foreground">Contact Green Valley</h2>
           <div className="mt-4 grid gap-3">
-            <a href="tel:+18005550148" className="flex items-center gap-2 transition-colors hover:text-primary"><Phone className="h-4 w-4 text-accent" />(800) 555-0148</a>
-            <a href="mailto:hello@greenvalleycampgrounds.com" className="flex items-center gap-2 transition-colors hover:text-primary"><Mail className="h-4 w-4 text-accent" />hello@greenvalleycampgrounds.com</a>
-            <a href="https://maps.google.com/?q=245+Pine+Ridge+Road+Evergreen+CO+80439" className="flex items-start gap-2 transition-colors hover:text-primary"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent" />245 Pine Ridge Road, Evergreen, CO 80439</a>
+            <a href={contactInfo.phoneHref} className="flex items-center gap-2 transition-colors hover:text-primary"><Phone className="h-4 w-4 text-accent" />{contactInfo.phone}</a>
+            <a href={`mailto:${contactInfo.email}`} className="flex items-center gap-2 transition-colors hover:text-primary"><Mail className="h-4 w-4 text-accent" />{contactInfo.email}</a>
+            <a href={contactInfo.addressHref} className="flex items-start gap-2 transition-colors hover:text-primary"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent" />{contactInfo.address}</a>
           </div>
         </div>
         <div>

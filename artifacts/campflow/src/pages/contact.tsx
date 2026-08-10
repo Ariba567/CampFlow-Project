@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { createContact, apiError } from '@/services/customerDashboardService';
 import { usePageMetadata } from '@/hooks/usePageMetadata';
+import { contactInfo } from '@/config/contact';
 
 export default function Contact() {
   usePageMetadata('Contact — CampFlow', 'Reach out to the Green Valley camping team with questions about reservations, groups, and locations.');
@@ -50,7 +51,7 @@ export default function Contact() {
 
       <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          {[{ icon: Phone, title: 'Call us', detail: '(800) 555-0148', note: 'Daily, 8 a.m.–7 p.m. local time' }, { icon: Mail, title: 'Email us', detail: 'hello@greenvalley.example', note: 'We usually reply within one business day' }, { icon: MapPin, title: 'Visit us', detail: 'Four locations across the U.S.', note: 'Pine Ridge · Lake Haven · Bluewater · Cedar Creek' }, { icon: Clock3, title: 'Campground hours', detail: 'Open year-round', note: 'Seasonal amenities vary by location' }].map(({ icon: Icon, title, detail, note }) => <Card key={title}><CardContent className="flex gap-4 p-5"><Icon className="mt-0.5 h-5 w-5 shrink-0 text-accent" /><div><h2 className="font-semibold">{title}</h2><p className="mt-1 text-sm text-foreground">{detail}</p><p className="mt-1 text-sm leading-5 text-muted-foreground">{note}</p></div></CardContent></Card>)}
+          {[{ icon: Phone, title: 'Call us', detail: contactInfo.phone, note: 'Daily, 8 a.m.–7 p.m. local time' }, { icon: Mail, title: 'Email us', detail: contactInfo.email, note: 'We usually reply within one business day' }, { icon: MapPin, title: 'Visit us', detail: contactInfo.address, note: 'Pine Ridge · Lake Haven · Bluewater · Cedar Creek' }, { icon: Clock3, title: 'Campground hours', detail: 'Open year-round', note: 'Seasonal amenities vary by location' }].map(({ icon: Icon, title, detail, note }) => <Card key={title}><CardContent className="flex gap-4 p-5"><Icon className="mt-0.5 h-5 w-5 shrink-0 text-accent" /><div><h2 className="font-semibold">{title}</h2><p className="mt-1 text-sm text-foreground">{detail}</p><p className="mt-1 text-sm leading-5 text-muted-foreground">{note}</p></div></CardContent></Card>)}
         </div>
         <Card>
           <CardHeader><CardTitle className="font-serif text-3xl">Send a message</CardTitle></CardHeader>

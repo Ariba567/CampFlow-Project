@@ -40,6 +40,12 @@ export default function Navbar() {
           <NavLink to="/about" className={navLinkClass}>
             About
           </NavLink>
+          <NavLink to="/contact" className={navLinkClass}>
+            Contact
+          </NavLink>
+          <NavLink to="/faq" className={navLinkClass}>
+            FAQ
+          </NavLink>
           {isAuthenticated && user?.role === 'customer' && (
             <NavLink to="/dashboard" className={navLinkClass}>
               My Trips
@@ -75,6 +81,12 @@ export default function Navbar() {
                 </NavLink>
                 <NavLink to="/about" className={navLinkClass} onClick={() => setMenuOpen(false)}>
                   About
+                </NavLink>
+                <NavLink to="/contact" className={navLinkClass} onClick={() => setMenuOpen(false)}>
+                  Contact
+                </NavLink>
+                <NavLink to="/faq" className={navLinkClass} onClick={() => setMenuOpen(false)}>
+                  FAQ
                 </NavLink>
                 {isAuthenticated && user?.role === 'customer' && (
                   <NavLink to="/dashboard" className={navLinkClass} onClick={() => setMenuOpen(false)}>

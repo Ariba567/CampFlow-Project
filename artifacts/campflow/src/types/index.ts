@@ -162,10 +162,9 @@ export interface IReview {
   id: string;
   customer: string | IUser;
   campground: string | ICampground;
-  overallRating: number;
-  title: string;
-  body: string;
-  images: string[];
-  isApproved: boolean;
+  reservationId: string;
+  rating: number;
+  comment: string;
   createdAt: string;
+  updatedAt: string;
 }
