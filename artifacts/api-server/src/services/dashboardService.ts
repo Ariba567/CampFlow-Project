@@ -14,8 +14,8 @@ const defaultLimit = 20;
 
 // ----------------- Customer dashboards -----------------
 export async function getCustomerSummary(userId: string) {
-  const upcomingCount = await Reservation.countDocuments({ customer: userId, checkIn: { $gte: new Date() } });
-  const pastCount = await Reservation.countDocuments({ customer: userId, checkOut: { $lt: new Date() } });
+  const upcomingCount = await Reservation.countDocuments({ customer: userId, status: { $in: ["pending", "confirmed"] } });
+  const pastCount = await Reservation.countDocuments({ customer: userId, status: { $in: ["completed", "cancelled"] } });
   const unreadNotifications = await Notification.countDocuments({ recipient: userId, isRead: false });
   const paymentsPending = await Payment.countDocuments({ customer: userId, status: "pending" });
 

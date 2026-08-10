@@ -36,8 +36,9 @@ export default function Dashboard() {
   if (error) return <ErrorState title="Dashboard unavailable" message={error} />;
   if (!data) return <div className="grid min-h-[50vh] place-items-center"><Spinner className="size-7 text-primary" /></div>;
 
-  const upcoming = data.reservations.filter((item) => new Date(item.checkIn) >= new Date() && item.status !== 'cancelled');
-  const history = data.reservations.filter((item) => new Date(item.checkOut) < new Date() || item.status === 'cancelled');
+  const upcoming = data.reservations.filter((item) => item.status === 'pending' || item.status === 'confirmed');
+  const history = data.reservations.filter((item) => item.status === 'completed' || item.status === 'cancelled');
+  const recentPast = history.filter((item) => item.status === 'completed').slice(0, 3);
 
   const handleDeleteReview = async (reviewId: string) => {
     try {
@@ -134,6 +135,36 @@ export default function Dashboard() {
               <p className="mt-5 text-sm leading-6 text-muted-foreground">
                 Booking, cancellation, and payment confirmations will appear here when available.
               </p>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-2xl">Recent past stays</h2>
+              <Button asChild variant="link" size="sm">
+                <Link to="/dashboard/bookings">See all</Link>
+              </Button>
+            </div>
+            {recentPast.length ? (
+              <div className="mt-5 space-y-3">
+                {recentPast.map((reservation) => (
+                  <div key={reservation._id} className="rounded-xl border p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold">{labelOf(reservation.campground, 'Green Valley')}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{String(reservation.checkIn).slice(0, 10)} — {String(reservation.checkOut).slice(0, 10)}</p>
+                      </div>
+                      <ReservationStatus status={reservation.status} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-5 text-sm text-muted-foreground">No completed stays yet.</p>
             )}
           </CardContent>
         </Card>
