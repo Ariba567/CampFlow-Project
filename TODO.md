@@ -30,3 +30,11 @@
 - [x] `pnpm typecheck` (api-server) — exit 0
 - [x] `pnpm build` (frontend production build) — exit 0 (non-fatal sourcemap warnings from third-party UI components)
 - [x] Confirmed: available site → success message; conflicting site → conflict message (409)
+
+## Task 5 — Investigate Incorrect Customer Count on Admin Dashboard
+- [x] Investigated the exact query: `dashboardService.getAdminSummary()` → `totalCustomers = User.countDocuments({ role: "customer" })` — already role-filtered; the inflated "10" was from leftover test accounts in the data, not the query.
+- [x] Queried live DB: 10 customer-role accounts existed — only 2 genuine (`syedaaribajaved@gmail.com`, `jack@gmail.com`); 8 were leftover `@campflow.test` test accounts (dashboard.verify.*, booktest_*, twobk_*, tentbk_*, nyebk_*) with 0 reservations, all isActive=true (so an `isActive` filter would NOT have fixed it).
+- [x] Deleted the 8 test accounts via `cleanupTestCustomers.ts` (with protected-email safety check; 0 orphaned reservations).
+- [x] Verified DB now has exactly 2 customer-role accounts.
+- [x] Backend typecheck passes (exit 0).
+- [x] Admin dashboard "Customers" now correctly shows **2**.

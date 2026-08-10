@@ -32,7 +32,15 @@ export function validate(schema: ZodSchema, part: RequestPart = "body") {
 
     // Replace with parsed output (handles defaults, coercion, strip unknown)
     if (part === "query") {
-      Object.assign(req.query, result.data);
+      // Express 5 exposes req.query as a getter that returns a fresh parsed
+      // object on every access, so Object.assign(req.query, ...) would mutate
+      // a throwaway object and the coercion would be lost. Replace the getter
+      // with a plain data property so downstream handlers see the parsed values.
+      Object.defineProperty(req, "query", {
+        value: result.data,
+        writable: true,
+        configurable: true,
+      });
     } else {
       (req as Request & Record<string, unknown>)[part] = result.data;
     }
