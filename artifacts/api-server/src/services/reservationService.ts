@@ -218,6 +218,25 @@ export async function getReservationById(
   return reservation;
 }
 
+// ─── Shared availability overlap logic ─────────────────────────────────────────
+// Build the exact same MongoDB filter used to determine if a campsite (or any of
+// a list of campsites) is already reserved for a given date range. This is THE
+// single source of truth for "occupied" — both the single-site "Check" button
+// and the bulk campground availability endpoint call into it, so they can never
+// disagree on what counts as an overlapping reservation.
+function buildOverlapFilter(
+  campsiteIds: mongoose.Types.ObjectId[],
+  checkIn: Date,
+  checkOut: Date,
+): Record<string, unknown> {
+  return {
+    campsite: { $in: campsiteIds },
+    status: { $ne: "cancelled" },
+    checkIn: { $lt: checkOut },
+    checkOut: { $gt: checkIn },
+  };
+}
+
 async function ensureReservationDoesNotOverlap(
   campsiteId: string,
   checkIn: Date,
@@ -228,12 +247,7 @@ async function ensureReservationDoesNotOverlap(
     throw Object.assign(new Error("Invalid campsite ID."), { status: 400 });
   }
 
-  const filters: Record<string, unknown> = {
-    campsite: new mongoose.Types.ObjectId(campsiteId),
-    status: { $ne: "cancelled" },
-    checkIn: { $lt: checkOut },
-    checkOut: { $gt: checkIn },
-  };
+  const filters = buildOverlapFilter([new mongoose.Types.ObjectId(campsiteId)], checkIn, checkOut);
 
   if (excludeReservationId && mongoose.isValidObjectId(excludeReservationId)) {
     filters._id = { $ne: new mongoose.Types.ObjectId(excludeReservationId) };
@@ -418,6 +432,59 @@ export async function checkReservationAvailability(input: {
   await ensureReservationDoesNotOverlap(input.campsite, input.checkIn, input.checkOut);
 
   return { available: true, message: "Available for these dates" };
+}
+
+// ─── Bulk campground availability ──────────────────────────────────────────────
+// Returns every campsite at a campground marked available/occupied for the given
+// date range. Reuses the EXACT same overlap filter (buildOverlapFilter) as the
+// single-site "Check" button, so the two can never disagree. A site is "occupied"
+// if it overlaps any non-cancelled reservation in the range, OR if the manager
+// has manually disabled it via isAvailable.
+export interface CampgroundSiteAvailability {
+  id: string;
+  name: string;
+  siteNumber: string;
+  type: string;
+  status: "available" | "occupied";
+  mapCoordinates?: { x: number; y: number };
+}
+
+export async function listCampgroundAvailability(
+  campgroundId: string,
+  checkIn: Date,
+  checkOut: Date,
+): Promise<CampgroundSiteAvailability[]> {
+  if (!mongoose.isValidObjectId(campgroundId)) {
+    throw Object.assign(new Error("Invalid campground ID."), { status: 400 });
+  }
+
+  if (checkOut <= checkIn) {
+    throw Object.assign(new Error("Check-out date must be after check-in date."), { status: 400 });
+  }
+
+  const sites = await Campsite.find({ campground: campgroundId, isActive: true })
+    .select("_id name siteNumber type isAvailable mapCoordinates")
+    .lean()
+    .exec();
+
+  if (sites.length === 0) {
+    return [];
+  }
+
+  const siteIds = sites.map((site) => site._id);
+  const overlapFilter = buildOverlapFilter(siteIds as mongoose.Types.ObjectId[], checkIn, checkOut);
+  const booked = await Reservation.distinct("campsite", overlapFilter).exec();
+
+  const bookedSet = new Set(booked.map((id) => String(id)));
+
+  return sites.map((site) => ({
+    id: String(site._id),
+    name: site.name,
+    siteNumber: site.siteNumber,
+    type: site.type,
+    status: bookedSet.has(String(site._id)) || site.isAvailable === false ? "occupied" : "available",
+    mapCoordinates: site.mapCoordinates,
+  }));
 }
 
 // Public quote entrypoint: given a campsite + campground + dates, return the

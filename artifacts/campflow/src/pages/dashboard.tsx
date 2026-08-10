@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, CalendarDays, CreditCard, Heart, MapPin, Star } from 'lucide-react';
+import { Bell, CalendarDays, CheckCircle, Clock, CreditCard, Heart, MapPin, Star, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
@@ -27,6 +27,19 @@ export default function Dashboard() {
             message: `Your payment of $${Number(payment.amount ?? 0).toFixed(2)} was confirmed.`,
             dedupeKey: `payment-confirmation:${idOf(payment)}`,
           }));
+        reservations.data
+          .filter((r) => r.status !== 'cancelled' && new Date(r.checkIn) > new Date())
+          .forEach((r) => {
+            const diffDays = Math.ceil((new Date(r.checkIn).getTime() - Date.now()) / 86400000);
+            if (diffDays <= 3) {
+              addUiNotification({
+                type: 'reminder',
+                title: 'Upcoming stay',
+                message: `Your stay at ${labelOf(r.campground, 'Green Valley')} starts in ${diffDays} day${diffDays === 1 ? '' : 's'}.`,
+                dedupeKey: `reservation-reminder:${idOf(r)}`,
+              });
+            }
+          });
         setData({ reservations: reservations.data, favorites: favorites.data, payments: payments.data, reviews: reviewsResult.data });
         setNotifications(listUiNotifications());
       })
@@ -124,16 +137,24 @@ export default function Dashboard() {
             </div>
             {notifications.length ? (
               <div className="mt-5 space-y-4">
-                {notifications.slice(0, 3).map((note) => (
-                  <div key={note.id} className="border-b pb-4 last:border-0">
-                    <p className="text-sm font-semibold">{note.title}</p>
-                    <p className="mt-1 text-sm leading-5 text-muted-foreground">{note.message}</p>
-                  </div>
-                ))}
+          {notifications.slice(0, 3).map((note) => (
+            <div key={note.id} className="flex items-start gap-3 border-b pb-4 last:border-0">
+              <span className="mt-0.5 flex-shrink-0">
+                {note.type === 'booking_confirmation' && <CheckCircle className="h-4 w-4 text-emerald-600" />}
+                {note.type === 'booking_cancellation' && <XCircle className="h-4 w-4 text-destructive" />}
+                {note.type === 'payment_confirmation' && <CreditCard className="h-4 w-4 text-primary" />}
+                {note.type === 'reminder' && <Clock className="h-4 w-4 text-accent" />}
+              </span>
+              <div>
+                <p className="text-sm font-semibold">{note.title}</p>
+                <p className="mt-1 text-sm leading-5 text-muted-foreground">{note.message}</p>
+              </div>
+            </div>
+          ))}
               </div>
             ) : (
               <p className="mt-5 text-sm leading-6 text-muted-foreground">
-                Booking, cancellation, and payment confirmations will appear here when available.
+                Booking, cancellation, payment confirmations, and stay reminders will appear here when available.
               </p>
             )}
           </CardContent>

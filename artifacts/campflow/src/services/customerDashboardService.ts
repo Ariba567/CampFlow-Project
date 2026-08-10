@@ -13,6 +13,7 @@ export async function listReservations(params: Record<string, unknown> = {}) { r
 export async function getReservation(id: string) { return (await api.get<{ data: ApiItem }>(`/reservations/${id}`)).data.data; }
 export async function quoteReservation(params: { campground?: string; campsite?: string; checkIn: string; checkOut: string }) { return (await api.get<{ data: ApiItem }>('/reservations/quote', { params })).data.data; }
 export async function checkCampsiteAvailability(params: { campground?: string; campsite?: string; checkIn: string; checkOut: string }) { return (await api.get<{ data: ApiItem }>('/reservations/availability', { params })).data.data; }
+export async function listCampgroundSiteAvailability(params: { campgroundId: string; arrival: string; departure: string }) { return (await api.get<{ data: ApiItem[] }>(`/campgrounds/${params.campgroundId}/site-availability`, { params: { arrival: params.arrival, departure: params.departure } })).data.data; }
 export async function createReservation(input: ApiItem) { return (await api.post<{ data: ApiItem }>('/reservations', input)).data.data; }
 export async function updateReservation(id: string, input: ApiItem) { return (await api.patch<{ data: ApiItem }>(`/reservations/${id}`, input)).data.data; }
 export async function cancelReservation(id: string) { return (await api.patch<{ data: ApiItem }>(`/reservations/${id}/cancel`)).data.data; }
@@ -34,7 +35,7 @@ export async function createReview(input: ApiItem) { return (await api.post<{ da
 export async function updateReview(reviewId: string, input: ApiItem) { return (await api.put<{ data: ApiItem }>(`/reviews/${reviewId}`, input)).data.data; }
 export async function deleteReview(reviewId: string) { return (await api.delete(`/reviews/${reviewId}`)).data; }
 export const apiError = (error: any, fallback: string) => String(error?.response?.data?.error ?? fallback);
-export type UiNotification = { id: string; title: string; message: string; type: 'booking_confirmation' | 'booking_cancellation' | 'payment_confirmation'; createdAt: string; dedupeKey?: string };
+export type UiNotification = { id: string; title: string; message: string; type: 'booking_confirmation' | 'booking_cancellation' | 'payment_confirmation' | 'reminder'; createdAt: string; dedupeKey?: string };
 const UI_NOTIFICATIONS_KEY = 'campflow_ui_notifications';
 export function listUiNotifications(): UiNotification[] { try { return JSON.parse(localStorage.getItem(UI_NOTIFICATIONS_KEY) ?? '[]'); } catch { return []; } }
 export function addUiNotification(notification: Omit<UiNotification, 'id' | 'createdAt'>) { const current = listUiNotifications(); const existing = notification.dedupeKey ? current.find((item) => item.dedupeKey === notification.dedupeKey) : undefined; if (existing) return existing; const next: UiNotification = { ...notification, id: crypto.randomUUID(), createdAt: new Date().toISOString() }; localStorage.setItem(UI_NOTIFICATIONS_KEY, JSON.stringify([next, ...current].slice(0, 20))); return next; }

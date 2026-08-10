@@ -4,6 +4,7 @@ import { authenticate } from "../middleware/authenticate";
 import { authorize } from "../middleware/authorize";
 import { validate, mongoIdSchema, paginationSchema } from "../middleware/validate";
 import * as campgroundController from "../controllers/campgroundController";
+import * as reservationController from "../controllers/reservationController";
 
 const router = Router();
 
@@ -110,6 +111,12 @@ router.get(
   "/",
   validate(campgroundListSchema, "query"),
   campgroundController.listCampgrounds,
+);
+
+router.get(
+  "/:campgroundId/site-availability",
+  validate(z.object({ campgroundId: z.string().regex(/^[a-f\d]{24}$/i, "Invalid campground ID") }), "params"),
+  reservationController.listCampgroundSiteAvailability,
 );
 
 router.get(
