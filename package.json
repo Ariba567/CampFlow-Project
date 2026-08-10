@@ -10,6 +10,7 @@
     "seed:admin": "pnpm --filter @workspace/api-server seed:admin"
   },
   "private": true,
+  "packageManager": "pnpm@11.18.0",
   "dependencies": {
     "@replit/connectors-sdk": "^0.4.1"
   },
