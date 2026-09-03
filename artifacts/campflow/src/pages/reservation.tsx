@@ -618,7 +618,7 @@ export default function Reservation() {
                 </fieldset>
               </div>
 
-              <aside className="lg:sticky lg:top-24">
+<aside className="lg:sticky lg:top-24">
                 <div className="border border-border bg-card">
                   <div className="border-b border-border px-6 py-5 md:px-7 md:py-6">
                     <p className="eyebrow text-muted-foreground">Stay summary</p>
@@ -655,31 +655,36 @@ export default function Reservation() {
                   </dl>
 
                   <div className="border-t border-border bg-secondary/40 px-6 py-5 md:px-7">
-                    <p className="eyebrow text-muted-foreground">Live price quote</p>
+                    <p className="eyebrow text-muted-foreground">Price breakdown</p>
                     {quoting ? (
                       <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
                         <Spinner className="size-2" /> Calculating…
                       </div>
                     ) : quote ? (
-                      <dl className="mt-3 space-y-2 text-sm">
+                      <dl className="mt-3 space-y-2.5 text-sm">
                         <div className="flex justify-between">
                           <dt className="text-muted-foreground">
-                            ${baseRate.toFixed(2)} × {nights} night{nights === 1 ? '' : 's'}
+                            ${baseRate.toFixed(2)} <span className="text-muted-foreground/70">×</span> {nights} night{nights === 1 ? '' : 's'}
                           </dt>
-                          <dd className="font-medium">${total.toFixed(2)}</dd>
+                          <dd className="font-medium tabular-nums">${total.toFixed(2)}</dd>
                         </div>
+                        {fees > 0 && (
+                          <div className="flex justify-between">
+                            <dt className="text-muted-foreground">Cleaning & service fee</dt>
+                            <dd className="font-medium tabular-nums">${fees.toFixed(2)}</dd>
+                          </div>
+                        )}
                         <div className="flex justify-between">
                           <dt className="text-muted-foreground">Taxes</dt>
-                          <dd className="font-medium">${taxes.toFixed(2)}</dd>
+                          <dd className="font-medium tabular-nums">${taxes.toFixed(2)}</dd>
                         </div>
-                        <div className="flex justify-between">
-                          <dt className="text-muted-foreground">Fees</dt>
-                          <dd className="font-medium">${fees.toFixed(2)}</dd>
+                        <div className="mt-3 flex items-baseline justify-between border-t border-border pt-4">
+                          <dt className="font-serif text-base text-foreground">Total <span className="ml-1 text-xs font-sans font-normal text-muted-foreground">USD</span></dt>
+                          <dd className="font-serif text-3xl text-primary tabular-nums">${grandTotal.toFixed(2)}</dd>
                         </div>
-                        <div className="mt-3 flex items-baseline justify-between border-t border-border pt-3">
-                          <dt className="font-serif text-base text-foreground">Total</dt>
-                          <dd className="font-serif text-3xl text-primary">${grandTotal.toFixed(2)}</dd>
-                        </div>
+                        <p className="mt-1 text-right text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                          Charged only after the host confirms
+                        </p>
                       </dl>
                     ) : quoteError ? (
                       <p className="mt-3 text-sm text-accent">{quoteError}</p>
@@ -690,20 +695,44 @@ export default function Reservation() {
                     )}
                   </div>
 
+                  {availabilityResult && (
+                    <div
+                      className={`mx-6 my-4 border px-4 py-3 text-sm md:mx-7 ${
+                        availabilityResult.available
+                          ? 'border-accent/30 bg-accent/5 text-accent'
+                          : 'border-destructive/40 bg-destructive/5 text-destructive'
+                      }`}
+                    >
+                      <p className="font-semibold">{availabilityResult.available ? 'Available' : 'Not available'}</p>
+                      <p className="mt-0.5 text-xs">{availabilityResult.message}</p>
+                    </div>
+                  )}
+
                   <div className="border-t border-border px-6 py-5 md:px-7">
                     <Button
                       type="submit"
                       size="lg"
-                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                      className="h-12 w-full bg-primary text-primary-foreground hover:bg-primary/90"
                       disabled={submitDisabled}
                       onClick={form.handleSubmit(submit)}
                     >
                       {form.formState.isSubmitting ? <Spinner className="mr-2 size-2" /> : null}
                       {form.formState.isSubmitting ? 'Confirming…' : 'Confirm booking'}
                     </Button>
-                    <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
-                      No charge until the campground confirms. Free cancellation up to 48 hours before arrival.
-                    </p>
+                    <ul className="mt-4 space-y-2 text-xs leading-5 text-muted-foreground">
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1 size-1.5 rounded-full bg-accent" />
+                        No charge until the campground confirms
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1 size-1.5 rounded-full bg-accent" />
+                        Free cancellation up to 48 hours before arrival
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1 size-1.5 rounded-full bg-accent" />
+                        Secure encrypted checkout
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </aside>
