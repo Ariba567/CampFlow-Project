@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, CalendarDays, CheckCircle, Clock, CreditCard, Heart, MapPin, Star, XCircle } from 'lucide-react';
+import { ArrowUpRight, Bell, CalendarDays, CheckCircle, Clock, CreditCard, Heart, MapPin, Star, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
@@ -8,9 +8,11 @@ import ErrorState from '@/components/ui/error-state';
 import ReservationStatus from '@/components/customer/ReservationStatus';
 import ReviewForm from '@/components/reviews/ReviewForm';
 import { addUiNotification, apiError, deleteReview, idOf, labelOf, listCustomerReviews, listFavorites, listPayments, listReservations, listUiNotifications, type ApiItem, type UiNotification } from '@/services/customerDashboardService';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [data, setData] = useState<{ reservations: ApiItem[]; favorites: ApiItem[]; payments: ApiItem[]; reviews: ApiItem[] } | null>(null);
   const [notifications, setNotifications] = useState<UiNotification[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -70,214 +72,258 @@ export default function Dashboard() {
       .catch(() => {});
   };
 
+  const greetingName = user?.firstName ? `, ${user.firstName}` : '';
+  const kpis = [
+    { n: '01', label: 'Upcoming stays', value: upcoming.length, icon: CalendarDays },
+    { n: '02', label: 'Past stays', value: history.length, icon: MapPin },
+    { n: '03', label: 'Favorites', value: data.favorites.length, icon: Heart },
+    { n: '04', label: 'Payment records', value: data.payments.length, icon: CreditCard },
+  ];
+
   return (
-    <div className="space-y-10 pb-10">
+    <div className="container-page space-y-16 pb-16">
+      <section className="relative overflow-hidden border-b border-border/60 pb-12">
+        <div className="grid items-end gap-10 md:grid-cols-[1.4fr_1fr]">
+          <div>
+            <p className="eyebrow">Your Green Valley</p>
+            <h1 className="display-1 mt-5">Welcome back{greetingName}.</h1>
+            <p className="lede mt-6 max-w-xl">
+              A quiet corner of your account &mdash; upcoming escapes, recent stays, the places
+              you keep coming back to. Everything you need to plan the next one without
+              losing track of the last.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-end justify-start gap-3 md:justify-end">
+            <Button asChild variant="outline" className="border-primary/30 bg-transparent">
+              <Link to="/dashboard/bookings">View all bookings</Link>
+            </Button>
+            <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Link to="/campgrounds">Plan a new stay <ArrowUpRight /></Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <section>
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Your Green Valley</p>
-        <h1 className="mt-3 font-serif text-5xl tracking-tight">Welcome back.</h1>
-        <p className="mt-4 text-lg text-muted-foreground">Keep your favorite places and upcoming escapes close.</p>
-      </section>
-
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: 'Upcoming stays', value: upcoming.length, icon: CalendarDays },
-          { label: 'Past stays', value: history.length, icon: MapPin },
-          { label: 'Favorites', value: data.favorites.length, icon: Heart },
-          { label: 'Payment records', value: data.payments.length, icon: CreditCard },
-        ].map(({ label, value, icon: Icon }) => (
-          <Card key={label}>
-            <CardContent className="p-5">
-              <Icon className="h-5 w-5 text-accent" />
-              <p className="mt-4 text-3xl font-semibold">{value}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{label}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="font-serif text-2xl">Upcoming reservations</h2>
-              <Button asChild variant="link" size="sm">
-                <Link to="/dashboard/bookings">See all</Link>
-              </Button>
-            </div>
-            {upcoming.length ? (
-              <div className="mt-5 space-y-3">
-                {upcoming.slice(0, 3).map((reservation) => (
-                  <div key={reservation._id} className="rounded-xl border p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="font-semibold">{labelOf(reservation.campground, 'Green Valley')}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{String(reservation.checkIn).slice(0, 10)} — {String(reservation.checkOut).slice(0, 10)}</p>
-                      </div>
-                      <ReservationStatus status={reservation.status} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-5 rounded-xl border border-dashed p-7 text-center">
-                <p className="font-medium">No reservations yet</p>
-                <p className="mt-2 text-sm text-muted-foreground">Start exploring campgrounds for your next escape.</p>
-                <Button asChild className="mt-4" size="sm">
-                  <Link to="/campgrounds">Explore campgrounds</Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-accent" />
-              <h2 className="font-serif text-2xl">Notifications</h2>
-            </div>
-            {notifications.length ? (
-              <div className="mt-5 space-y-4">
-          {notifications.slice(0, 3).map((note) => (
-            <div key={note.id} className="flex items-start gap-3 border-b pb-4 last:border-0">
-              <span className="mt-0.5 flex-shrink-0">
-                {note.type === 'booking_confirmation' && <CheckCircle className="h-4 w-4 text-emerald-600" />}
-                {note.type === 'booking_cancellation' && <XCircle className="h-4 w-4 text-destructive" />}
-                {note.type === 'payment_confirmation' && <CreditCard className="h-4 w-4 text-primary" />}
-                {note.type === 'reminder' && <Clock className="h-4 w-4 text-accent" />}
-              </span>
+        <div className="mb-8 flex items-end justify-between border-b border-border pb-4">
+          <p className="eyebrow">At a glance</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Updated just now</p>
+        </div>
+        <dl className="grid grid-cols-2 divide-x divide-y divide-border border border-border md:grid-cols-4 md:divide-y-0">
+          {kpis.map(({ label, value, icon: Icon }) => (
+            <div key={label} className="flex flex-col gap-6 bg-card p-6 md:p-7">
+              <Icon className="h-4 w-4 text-accent" strokeWidth={1.5} />
               <div>
-                <p className="text-sm font-semibold">{note.title}</p>
-                <p className="mt-1 text-sm leading-5 text-muted-foreground">{note.message}</p>
+                <dd className="font-serif text-4xl tracking-[-0.02em]">{value}</dd>
+                <dt className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</dt>
               </div>
             </div>
           ))}
-              </div>
-            ) : (
-              <p className="mt-5 text-sm leading-6 text-muted-foreground">
-                Booking, cancellation, payment confirmations, and stay reminders will appear here when available.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        </dl>
       </section>
 
-      <section>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="font-serif text-2xl">Recent past stays</h2>
-              <Button asChild variant="link" size="sm">
-                <Link to="/dashboard/bookings">See all</Link>
+      <section className="grid gap-10 lg:grid-cols-[1.25fr_0.75fr]">
+        <div>
+          <div className="mb-6 flex items-end justify-between gap-4 border-b border-border pb-4">
+            <h2 className="font-serif text-2xl">Upcoming reservations</h2>
+            <Button asChild variant="link" size="sm" className="text-primary">
+              <Link to="/dashboard/bookings">See all <ArrowUpRight /></Link>
+            </Button>
+          </div>
+          {upcoming.length ? (
+            <div className="space-y-px bg-border">
+              {upcoming.slice(0, 3).map((reservation) => (
+                <article key={reservation._id} className="flex flex-wrap items-center justify-between gap-4 bg-card p-6">
+                  <div className="space-y-1">
+                    <p className="font-serif text-xl">{labelOf(reservation.campground, 'Green Valley')}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {String(reservation.checkIn).slice(0, 10)} &mdash; {String(reservation.checkOut).slice(0, 10)}
+                    </p>
+                  </div>
+                  <ReservationStatus status={reservation.status} />
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="border border-dashed border-border bg-card p-10 text-center">
+              <p className="font-serif text-xl">No reservations yet</p>
+              <p className="lede mt-2">Start exploring campgrounds for your next escape.</p>
+              <Button asChild className="mt-5 bg-primary text-primary-foreground hover:bg-primary/90">
+                <Link to="/campgrounds">Explore campgrounds</Link>
               </Button>
             </div>
-            {recentPast.length ? (
-              <div className="mt-5 space-y-3">
-                {recentPast.map((reservation) => (
-                  <div key={reservation._id} className="rounded-xl border p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="font-semibold">{labelOf(reservation.campground, 'Green Valley')}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{String(reservation.checkIn).slice(0, 10)} — {String(reservation.checkOut).slice(0, 10)}</p>
-                      </div>
-                      <ReservationStatus status={reservation.status} />
+          )}
+        </div>
+
+        <aside className="border-l border-border/60 pl-10">
+          <p className="eyebrow">Field notes</p>
+          <h2 className="display-3 mt-3 flex items-center gap-3">
+            <Bell className="h-5 w-5 text-accent" /> Notifications
+          </h2>
+          {notifications.length ? (
+            <ul className="mt-8 space-y-6">
+              {notifications.slice(0, 3).map((note) => (
+                <li key={note.id} className="border-b border-border/60 pb-6 last:border-0">
+                  <div className="flex items-start gap-3">
+                    <span className="mt-1 flex-shrink-0">
+                      {note.type === 'booking_confirmation' && <CheckCircle className="h-4 w-4 text-primary" />}
+                      {note.type === 'booking_cancellation' && <XCircle className="h-4 w-4 text-destructive" />}
+                      {note.type === 'payment_confirmation' && <CreditCard className="h-4 w-4 text-primary" />}
+                      {note.type === 'reminder' && <Clock className="h-4 w-4 text-accent" />}
+                    </span>
+                    <div>
+                      <p className="font-serif text-lg leading-tight">{note.title}</p>
+                      <p className="lede mt-2 text-sm">{note.message}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-5 text-sm text-muted-foreground">No completed stays yet.</p>
-            )}
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="font-serif text-2xl">Favorite campsites</h2>
-            {data.favorites.length ? (
-              <div className="mt-4 space-y-2">
-                {data.favorites.slice(0, 4).map((site) => (
-                  <p key={site._id} className="text-sm">{site.name ?? `Site ${site.siteNumber}`}</p>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-4 text-sm text-muted-foreground">No favorite campsites yet.</p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="font-serif text-2xl">Saved payment methods</h2>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">Saved cards are a UI-only placeholder until secure payment-method storage is available.</p>
-            <div className="mt-4 rounded-xl bg-secondary p-4 text-sm font-medium">Visa •••• 4242 <span className="ml-2 text-muted-foreground">Demo only</span></div>
-          </CardContent>
-        </Card>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="lede mt-6">
+              Booking, cancellation, payment confirmations, and stay reminders will appear
+              here as they happen.
+            </p>
+          )}
+        </aside>
       </section>
 
       <section>
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="font-serif text-2xl">Payment history</h2>
-            {data.payments.length ? (
-              <div className="mt-5 space-y-3">
-                {data.payments.map((payment) => (
-                  <div key={idOf(payment)} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-sm">
-                    <div>
-                      <p className="font-semibold">${Number(payment.amount ?? 0).toFixed(2)} · {String(payment.method ?? 'payment').replace('_', ' ')}</p>
-                      <p className="mt-1 text-muted-foreground">{String(payment.paidAt ?? payment.createdAt ?? '').slice(0, 10)} · {payment.transactionId ?? 'Payment record'}</p>
-                    </div>
-                    <span className="capitalize text-muted-foreground">{String(payment.status ?? 'pending').replace('_', ' ')}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-4 text-sm text-muted-foreground">No payment records yet.</p>
-            )}
-          </CardContent>
-        </Card>
+        <div className="mb-6 flex items-end justify-between gap-4 border-b border-border pb-4">
+          <h2 className="font-serif text-2xl">Recent past stays</h2>
+          <Button asChild variant="link" size="sm" className="text-primary">
+            <Link to="/dashboard/bookings">All bookings <ArrowUpRight /></Link>
+          </Button>
+        </div>
+        {recentPast.length ? (
+          <div className="space-y-px bg-border">
+            {recentPast.map((reservation) => (
+              <article key={reservation._id} className="flex flex-wrap items-center justify-between gap-4 bg-card p-6">
+                <div className="space-y-1">
+                  <p className="font-serif text-xl">{labelOf(reservation.campground, 'Green Valley')}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {String(reservation.checkIn).slice(0, 10)} &mdash; {String(reservation.checkOut).slice(0, 10)}
+                  </p>
+                </div>
+                <ReservationStatus status={reservation.status} />
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="lede">No completed stays yet. The first one is the one you tell stories about.</p>
+        )}
       </section>
 
-      <section className="space-y-6">
+      <section className="grid gap-10 md:grid-cols-2">
         <div>
+          <div className="border-b border-border pb-4">
+            <h2 className="font-serif text-2xl">Favorite campsites</h2>
+            <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">Pinned by you</p>
+          </div>
+          {data.favorites.length ? (
+            <ul className="mt-6 divide-y divide-border/60 border-y border-border/60">
+              {data.favorites.slice(0, 4).map((site) => (
+                <li key={site._id} className="flex items-baseline justify-between py-4 text-base">
+                  <span className="font-serif text-lg">{site.name ?? `Site ${site.siteNumber}`}</span>
+                  <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Saved</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="lede mt-4">No favorite campsites yet. Tap the heart on a site to keep it close.</p>
+          )}
+        </div>
+        <div>
+          <div className="border-b border-border pb-4">
+            <h2 className="font-serif text-2xl">Payment method</h2>
+            <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">On file</p>
+          </div>
+          <div className="mt-6 border border-border/60 bg-card p-6">
+            <p className="lede text-sm">
+              Saved cards are a UI-only placeholder until secure payment-method storage is available.
+            </p>
+            <p className="mt-4 font-serif text-lg">Visa <span className="text-muted-foreground">&middot;&middot;&middot;&middot; 4242</span></p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Demo only</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="border-b border-border pb-4">
+          <h2 className="font-serif text-2xl">Payment history</h2>
+          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">The receipts</p>
+        </div>
+        {data.payments.length ? (
+          <div className="mt-6 overflow-hidden border border-border/60">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-secondary/60 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                <tr>
+                  <th className="px-5 py-4 font-medium">Amount</th>
+                  <th className="px-5 py-4 font-medium">Method</th>
+                  <th className="px-5 py-4 font-medium">Date</th>
+                  <th className="px-5 py-4 font-medium">Reference</th>
+                  <th className="px-5 py-4 font-medium text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {data.payments.map((payment) => (
+                  <tr key={idOf(payment)} className="bg-card">
+                    <td className="px-5 py-4 font-serif text-base">${Number(payment.amount ?? 0).toFixed(2)}</td>
+                    <td className="px-5 py-4 text-muted-foreground">{String(payment.method ?? 'payment').replace('_', ' ')}</td>
+                    <td className="px-5 py-4 text-muted-foreground">{String(payment.paidAt ?? payment.createdAt ?? '').slice(0, 10)}</td>
+                    <td className="px-5 py-4 text-muted-foreground">{payment.transactionId ?? 'Payment record'}</td>
+                    <td className="px-5 py-4 text-right capitalize text-muted-foreground">{String(payment.status ?? 'pending').replace('_', ' ')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="lede mt-4">No payment records yet.</p>
+        )}
+      </section>
+
+      <section className="border-t border-border/60 pt-16">
+        <div className="mb-8 border-b border-border pb-4">
           <h2 className="font-serif text-2xl">Your reviews</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Reviews you've written for Green Valley campgrounds.</p>
+          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">In your own words</p>
         </div>
         {data.reviews.length ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {data.reviews.map((review) => (
               <Card key={idOf(review)}>
-                <CardContent className="p-6">
+                <CardContent className="p-6 md:p-8">
                   {editingId === idOf(review) ? (
-                     <ReviewForm
-                       campgroundId={idOf(review.campground)}
-                       reservationId={idOf(review.reservationId)}
-                       existingReview={review}
-                       onSubmitted={handleReviewSubmitted}
-                     />
+                    <ReviewForm
+                      campgroundId={idOf(review.campground)}
+                      reservationId={idOf(review.reservationId)}
+                      existingReview={review}
+                      onSubmitted={handleReviewSubmitted}
+                    />
                   ) : (
                     <div>
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1 text-accent">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2 text-accent">
                             {Array.from({ length: Number(review.rating ?? 0) }, (_, i) => (
                               <Star key={i} className="h-4 w-4 fill-current" />
                             ))}
                           </div>
-                          <span className="font-semibold">{labelOf(review.campground, 'Green Valley')}</span>
+                          <p className="mt-2 font-serif text-xl">{labelOf(review.campground, 'Green Valley')}</p>
                         </div>
-                        <time className="text-sm text-muted-foreground">
+                        <time className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                           {String(review.createdAt ?? '').slice(0, 10)}
                         </time>
                       </div>
-                      <p className="mt-3 text-sm leading-6 text-muted-foreground">{review.comment}</p>
-                      <div className="mt-4 flex gap-2">
+                      <p className="lede mt-4 text-base">{review.comment}</p>
+                      <div className="mt-6 flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => setEditingId(idOf(review))}>
                           Edit
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => void handleDeleteReview(idOf(review))}
                         >
                           Delete
@@ -291,8 +337,9 @@ export default function Dashboard() {
           </div>
         ) : (
           <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-sm text-muted-foreground">No reviews yet. Share your stay from a campground page.</p>
+            <CardContent className="p-10 text-center">
+              <p className="font-serif text-xl">No reviews yet</p>
+              <p className="lede mt-2">Share your stay from a campground page when you&rsquo;re ready.</p>
             </CardContent>
           </Card>
         )}

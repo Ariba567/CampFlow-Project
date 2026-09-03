@@ -8,11 +8,9 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-accent/20 selection:text-accent-foreground transition-colors duration-300">
+    <div className="min-h-screen bg-background text-foreground selection:bg-accent/20 selection:text-accent-foreground">
       <Navbar />
-      <main className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6"> 
-        {children}
-      </main>
+      <main>{children}</main>
       <Footer />
     </div>
   );

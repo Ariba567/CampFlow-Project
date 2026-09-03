@@ -1,5 +1,4 @@
 import { Star } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { idOf, type ApiItem } from '@/services/customerDashboardService';
 
 interface ReviewListProps {
@@ -8,11 +7,12 @@ interface ReviewListProps {
   totalReviews: number;
 }
 
-function renderStars(rating: number) {
+function renderStars(rating: number, size: 'sm' | 'md' = 'sm') {
+  const sizeClass = size === 'md' ? 'h-5 w-5' : 'h-4 w-4';
   return Array.from({ length: 5 }, (_, i) => (
     <Star
       key={i}
-      className={`h-4 w-4 ${i < rating ? 'fill-current text-accent' : 'text-muted-foreground/30'}`}
+      className={`${sizeClass} ${i < rating ? 'fill-current text-accent' : 'text-muted-foreground/25'}`}
     />
   ));
 }
@@ -23,44 +23,63 @@ function authorName(review: ApiItem): string {
   return customer.fullName || `${customer.firstName ?? ''} ${customer.lastName ?? ''}`.trim() || customer.email || 'Anonymous';
 }
 
+function authorInitial(name: string): string {
+  return name.trim().charAt(0).toUpperCase();
+}
+
 export default function ReviewList({ reviews, averageRating, totalReviews }: ReviewListProps) {
   if (reviews.length === 0) {
     return (
-      <div className="rounded-2xl border bg-card p-8 text-center shadow-sm">
-        <p className="text-sm text-muted-foreground">No reviews yet — be the first to share your stay.</p>
+      <div className="border border-border/60 bg-card p-10 text-center">
+        <p className="font-serif text-2xl text-foreground">No reviews yet</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          Be the first to share what made your stay memorable.
+        </p>
       </div>
     );
   }
 
+  const rounded = Math.round(averageRating ?? 0);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-6 rounded-2xl border bg-card p-6 shadow-sm">
-        <div className="text-4xl font-bold">{averageRating !== null ? averageRating.toFixed(1) : '—'}</div>
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-end justify-between gap-6 border-b border-border/70 pb-8">
         <div>
-          <div className="flex items-center gap-1 text-accent">{renderStars(Math.round(averageRating ?? 0))}</div>
-          <p className="text-sm text-muted-foreground">{totalReviews} review{totalReviews !== 1 ? 's' : ''}</p>
+          <p className="eyebrow">Guest reviews</p>
+          <div className="mt-3 flex items-baseline gap-3">
+            <span className="font-serif text-5xl font-medium text-foreground">
+              {averageRating !== null ? averageRating.toFixed(1) : '—'}
+            </span>
+            <span className="text-sm text-muted-foreground">/ 5.0</span>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Based on {totalReviews} review{totalReviews !== 1 ? 's' : ''} from verified guests
+          </p>
         </div>
+        <div className="flex items-center gap-1">{renderStars(rounded, 'md')}</div>
       </div>
 
-      <div className="space-y-4">
-        {reviews.map((review) => (
-          <Card key={idOf(review)} className="shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 text-accent">{renderStars(Number(review.rating ?? 0))}</div>
-                  <span className="font-semibold">{authorName(review)}</span>
+      <div className="grid gap-8 md:grid-cols-2">
+        {reviews.map((review) => {
+          const name = authorName(review);
+          const ratingValue = Number(review.rating ?? 0);
+          const date = String(review.createdAt ?? '').slice(0, 10);
+          return (
+            <article key={idOf(review)} className="border-b border-border/60 pb-8 last:border-0 md:border-0 md:pb-0">
+              <header className="flex items-center gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-full bg-secondary font-serif text-base font-medium text-foreground">
+                  {authorInitial(name)}
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-foreground">{name}</p>
+                  <p className="text-xs text-muted-foreground">Verified guest · {date}</p>
                 </div>
-                <time className="text-sm text-muted-foreground">
-                  {String(review.createdAt ?? '').slice(0, 10)}
-                </time>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                {review.comment}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+              </header>
+              <div className="mt-3 flex items-center gap-1">{renderStars(ratingValue)}</div>
+              <p className="mt-3 text-[0.95rem] leading-7 text-foreground/85">{review.comment}</p>
+            </article>
+          );
+        })}
       </div>
     </div>
   );

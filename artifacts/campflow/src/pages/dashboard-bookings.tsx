@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Edit3, Star, XCircle } from 'lucide-react';
+import { ArrowUpRight, CalendarDays, Edit3, MapPin, Star, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -108,94 +108,169 @@ export default function DashboardBookings() {
   const completed = reservations.filter((item) => item.status === 'completed');
   const cancelled = reservations.filter((item) => item.status === 'cancelled');
   const canManage = (reservation: ApiItem) => new Date(reservation.checkIn) >= new Date() && reservation.status !== 'cancelled' && reservation.status !== 'completed';
-  const group = (title: string, items: ApiItem[]) => (
+
+  const group = (eyebrowText: string, title: string, items: ApiItem[]) => (
     <section>
-      <h2 className="font-serif text-3xl">{title}</h2>
+      <div className="mb-8 flex items-baseline justify-between gap-6">
+        <div>
+          <p className="eyebrow">{eyebrowText}</p>
+          <h2 className="display-3 mt-3">{title}</h2>
+        </div>
+        <span className="font-serif text-3xl text-muted-foreground/70">
+          {String(items.length).padStart(2, '0')}
+        </span>
+      </div>
       {items.length ? (
-        <div className="mt-5 grid gap-4">
+        <div className="space-y-px bg-border">
           {items.map((reservation) => {
             const existingReview = reviewFor(reservation);
             return (
-              <Card key={idOf(reservation)}>
-                <CardContent className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="text-lg font-semibold">{labelOf(reservation.campground, 'Green Valley')}</h3>
-                      <ReservationStatus status={reservation.status} />
-                    </div>
-                    <p className="mt-2 text-sm text-muted-foreground">{dateOnly(reservation.checkIn)} — {dateOnly(reservation.checkOut)} · {labelOf(reservation.campsite, 'Campsite')}</p>
+              <article
+                key={idOf(reservation)}
+                className="flex flex-col gap-6 bg-card p-6 md:flex-row md:items-center md:justify-between md:p-8"
+              >
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="font-serif text-2xl">{labelOf(reservation.campground, 'Green Valley')}</h3>
+                    <ReservationStatus status={reservation.status} />
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <InvoiceDialog reservation={reservation} />
-                    {reservation.status === 'completed' && (
-                      <Button variant="outline" size="sm" onClick={() => setReviewReservation(reservation)}>
-                        <Star />{existingReview ? 'Edit your review' : 'Leave a review'}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <CalendarDays className="h-3.5 w-3.5 text-accent" />
+                      {dateOnly(reservation.checkIn)} &mdash; {dateOnly(reservation.checkOut)}
+                    </span>
+                    <span className="hidden h-3 w-px bg-border md:inline-block" />
+                    <span className="inline-flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-accent" />
+                      {labelOf(reservation.campsite, 'Campsite')}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <InvoiceDialog reservation={reservation} />
+                  {reservation.status === 'completed' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setReviewReservation(reservation)}
+                      className="border-primary/30"
+                    >
+                      <Star />{existingReview ? 'Edit your review' : 'Leave a review'}
+                    </Button>
+                  )}
+                  {canManage(reservation) && (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => openEdit(reservation)}>
+                        <Edit3 />Edit
                       </Button>
-                    )}
-                    {canManage(reservation) && (
-                      <>
-                        <Button variant="outline" size="sm" onClick={() => openEdit(reservation)}><Edit3 />Edit</Button>
-                        <Button variant="outline" size="sm" onClick={() => requestCancel(reservation)}><XCircle />Cancel</Button>
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => requestCancel(reservation)}
+                      >
+                        <XCircle />Cancel
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </article>
             );
           })}
         </div>
       ) : (
-        <Card className="mt-5">
-          <CardContent className="p-8 text-center text-sm text-muted-foreground">No {title.toLowerCase()} yet.</CardContent>
-        </Card>
+        <p className="lede border-l-2 border-accent pl-5">
+          No {title.toLowerCase()} yet &mdash; once you book or complete a stay, it&rsquo;ll show up here.
+        </p>
       )}
     </section>
   );
 
   return (
-    <div className="space-y-10 pb-10">
-      <section>
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Your stays</p>
-        <h1 className="mt-3 font-serif text-5xl tracking-tight">Bookings</h1>
+    <div className="container-page space-y-20 pb-16">
+      <section className="border-b border-border/60 pb-12">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p className="eyebrow">Your stays</p>
+            <h1 className="display-1 mt-5">Bookings</h1>
+            <p className="lede mt-5 max-w-xl">
+              Every reservation, every past night, every cancelled plan. Update dates,
+              cancel a booking, or leave a review for a stay that&rsquo;s already wrapped.
+            </p>
+          </div>
+          <Button asChild variant="outline" className="border-primary/30 bg-transparent">
+            <a href="/reservation">Plan a new stay <ArrowUpRight /></a>
+          </Button>
+        </div>
       </section>
+
       {error && <ErrorState title="Bookings unavailable" message={error} />}
-      {group('Upcoming reservations', upcoming)}
-      {group('Completed stays', completed)}
-      {group('Cancelled', cancelled)}
+      {group('On the calendar', 'Upcoming reservations', upcoming)}
+      {group('Memories', 'Completed stays', completed)}
+      {group('No longer happening', 'Cancelled', cancelled)}
+
       <Dialog open={!!edit} onOpenChange={(open) => !open && setEdit(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit reservation dates</DialogTitle>
+            <DialogTitle className="font-serif text-2xl">Edit reservation dates</DialogTitle>
           </DialogHeader>
           {edit && (
             <form className="space-y-5" onSubmit={saveEdit}>
               <div className="space-y-2">
                 <Label htmlFor="edit-in">Arrival</Label>
-                <Input id="edit-in" name="checkIn" type="date" value={editDates.checkIn} onChange={(event) => { setEditDates((value) => ({ ...value, checkIn: event.target.value })); setEditError(null); }} required />
+                <Input
+                  id="edit-in"
+                  name="checkIn"
+                  type="date"
+                  value={editDates.checkIn}
+                  onChange={(event) => {
+                    setEditDates((value) => ({ ...value, checkIn: event.target.value }));
+                    setEditError(null);
+                  }}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-out">Departure</Label>
-                <Input id="edit-out" name="checkOut" type="date" min={editDates.checkIn} value={editDates.checkOut} onChange={(event) => { setEditDates((value) => ({ ...value, checkOut: event.target.value })); setEditError(null); }} required />
+                <Input
+                  id="edit-out"
+                  name="checkOut"
+                  type="date"
+                  min={editDates.checkIn}
+                  value={editDates.checkOut}
+                  onChange={(event) => {
+                    setEditDates((value) => ({ ...value, checkOut: event.target.value }));
+                    setEditError(null);
+                  }}
+                  required
+                />
               </div>
               {revisedNights > 0 && (
-                <div className="rounded-xl bg-secondary p-4 text-sm">
-                  <div className="flex justify-between">
-                    <span>{revisedNights} night{revisedNights === 1 ? '' : 's'}</span>
-                    <span className="font-semibold">${revisedTotal.toFixed(2)}</span>
+                <div className="border-l-2 border-accent bg-secondary/40 p-4 text-sm">
+                  <div className="flex items-baseline justify-between">
+                    <span className="font-serif text-lg">
+                      {revisedNights} night{revisedNights === 1 ? '' : 's'}
+                    </span>
+                    <span className="font-serif text-lg">${revisedTotal.toFixed(2)}</span>
                   </div>
                   <p className="mt-1 text-muted-foreground">Updated total, including taxes and stored fees.</p>
                 </div>
               )}
               {editError && <p className="text-sm text-destructive">{editError}</p>}
-              <Button type="submit" disabled={revisedNights <= 0}>Save changes</Button>
+              <Button type="submit" disabled={revisedNights <= 0} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                Save changes
+              </Button>
             </form>
           )}
         </DialogContent>
       </Dialog>
+
       <Dialog open={!!reviewReservation} onOpenChange={(open) => !open && setReviewReservation(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{reviewReservation ? (reviewFor(reviewReservation) ? 'Edit your review' : 'Leave a review') : ''}</DialogTitle>
+            <DialogTitle className="font-serif text-2xl">
+              {reviewReservation ? (reviewFor(reviewReservation) ? 'Edit your review' : 'Leave a review') : ''}
+            </DialogTitle>
           </DialogHeader>
           {reviewReservation && (
             <ReviewForm
@@ -207,6 +282,7 @@ export default function DashboardBookings() {
           )}
         </DialogContent>
       </Dialog>
+
       <Modal
         title="Cancel reservation?"
         description="Cancel this reservation? It will remain in your booking history."
@@ -218,7 +294,7 @@ export default function DashboardBookings() {
         confirmLabel={isCancelling ? 'Cancelling...' : 'Cancel reservation'}
         cancelLabel="Keep reservation"
       >
-        <p className="text-sm text-muted-foreground">
+        <p className="lede">
           {cancelModalReservation
             ? `Your reservation at ${labelOf(cancelModalReservation.campground, 'Green Valley')} will remain in your booking history after cancellation.`
             : 'Confirm cancellation of the selected reservation.'}

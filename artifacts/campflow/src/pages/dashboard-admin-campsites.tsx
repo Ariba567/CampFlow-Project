@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { BedDouble, MapPinned, Pencil, Plus, Tent, Trash2, Truck, UsersRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -18,16 +18,244 @@ import { toast } from 'sonner';
 
 type SiteForm = { id?: string; campground: string; name: string; siteNumber: string; type: string; description: string; maxGuests: string; basePrice: string; isAvailable: boolean };
 const blankForm = (): SiteForm => ({ campground: '', name: '', siteNumber: '', type: 'tent', description: '', maxGuests: '2', basePrice: '0', isAvailable: true });
-const toForm = (site: ApiItem): SiteForm => ({ id: idOf(site), campground: idOf(site.campground), name: site.name ?? '', siteNumber: site.siteNumber ?? '', type: site.type ?? 'tent', description: site.description ?? '', maxGuests: String(site.capacity?.maxGuests ?? 2), basePrice: String(site.basePrice ?? 0), isAvailable: Boolean(site.isAvailable) });
+const toForm = (site: ApiItem): SiteForm => ({
+  id: idOf(site),
+  campground: idOf(site.campground),
+  name: site.name ?? '',
+  siteNumber: site.siteNumber ?? '',
+  type: site.type ?? 'tent',
+  description: site.description ?? '',
+  maxGuests: String(site.capacity?.maxGuests ?? 2),
+  basePrice: String(site.basePrice ?? 0),
+  isAvailable: Boolean(site.isAvailable),
+});
+
+const typeMeta: Record<string, { label: string; Icon: React.ComponentType<{ className?: string; strokeWidth?: number }> }> = {
+  tent: { label: 'Tent', Icon: Tent },
+  rv: { label: 'RV', Icon: Truck },
+  cabin: { label: 'Cabin', Icon: BedDouble },
+  glamping: { label: 'Glamping', Icon: MapPinned },
+  group: { label: 'Group', Icon: UsersRound },
+};
+const siteTypeMeta = (type: string) => typeMeta[type] ?? { label: type, Icon: MapPinned };
 
 export default function DashboardAdminCampsites() {
-  const { user } = useAuth(); const role = user?.role === 'admin' ? 'admin' : 'manager';
-  const [data, setData] = useState<{ rows: ApiItem[]; page: number; totalPages: number }>({ rows: [], page: 1, totalPages: 1 }); const [campgrounds, setCampgrounds] = useState<ApiItem[]>([]); const [search, setSearch] = useState(''); const [filter, setFilter] = useState('all'); const [sort, setSort] = useState('name'); const [order, setOrder] = useState<'asc' | 'desc'>('asc'); const [loading, setLoading] = useState(true); const [error, setError] = useState<string | null>(null); const [form, setForm] = useState<SiteForm | null>(null); const [saving, setSaving] = useState(false);
-  const load = (page = data.page) => { setLoading(true); listCampsites(role, { page, limit: 20, search: search || undefined, isAvailable: filter === 'all' ? undefined : filter === 'available', sort, order }).then((result) => setData({ rows: result.data, page: result.meta.page, totalPages: result.meta.totalPages })).catch((caught) => setError(apiError(caught, 'We could not load campsites.'))).finally(() => setLoading(false)); };
+  const { user } = useAuth();
+  const role = user?.role === 'admin' ? 'admin' : 'manager';
+  const [data, setData] = useState<{ rows: ApiItem[]; page: number; totalPages: number }>({ rows: [], page: 1, totalPages: 1 });
+  const [campgrounds, setCampgrounds] = useState<ApiItem[]>([]);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [sort, setSort] = useState('name');
+  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState<SiteForm | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const load = (page = data.page) => {
+    setLoading(true);
+    listCampsites(role, { page, limit: 20, search: search || undefined, isAvailable: filter === 'all' ? undefined : filter === 'available', sort, order })
+      .then((result) => setData({ rows: result.data, page: result.meta.page, totalPages: result.meta.totalPages }))
+      .catch((caught) => setError(apiError(caught, 'We could not load campsites.')))
+      .finally(() => setLoading(false));
+  };
   useEffect(() => { listCampgrounds().then(setCampgrounds).catch(() => undefined); }, []);
   useEffect(() => { const timer = window.setTimeout(() => load(1), 180); return () => window.clearTimeout(timer); }, [role, search, filter, sort, order]);
-  const save = async (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!form) return; if (!form.campground || !form.name || !form.siteNumber || Number(form.maxGuests) < 1 || Number(form.basePrice) < 0) { setError('Complete the required campsite fields with valid values.'); return; } setSaving(true); try { const input = { campground: form.campground, name: form.name, siteNumber: form.siteNumber, type: form.type, description: form.description || undefined, capacity: { maxGuests: Number(form.maxGuests) }, basePrice: Number(form.basePrice), isAvailable: form.isAvailable }; if (form.id) await updateCampsite(form.id, input); else await createCampsite(input); toast.success(form.id ? 'Campsite updated' : 'Campsite created'); setForm(null); load(); } catch (caught) { setError(apiError(caught, 'We could not save this campsite.')); } finally { setSaving(false); } };
-  const remove = async (site: ApiItem) => { if (!window.confirm(`Delete ${site.name ?? site.siteNumber}? This cannot be undone.`)) return; try { await deleteCampsite(idOf(site)); toast.success('Campsite deleted'); load(); } catch (caught) { setError(apiError(caught, 'We could not delete this campsite.')); } };
-  const columns: DataColumn<ApiItem>[] = [{ label: 'Campsite', sortKey: 'name', cell: (row) => <div><p className="font-medium">{row.name}</p><p className="text-xs text-muted-foreground">Site {row.siteNumber} · {row.type}</p></div> }, { label: 'Campground', cell: (row) => labelOf(row.campground, '—') }, { label: 'Capacity', cell: (row) => `${row.capacity?.maxGuests ?? 0} guests` }, { label: 'Nightly rate', sortKey: 'basePrice', cell: (row) => `$${Number(row.basePrice ?? 0).toFixed(2)}` }, { label: 'Availability', cell: (row) => <span className={row.isAvailable ? 'font-medium text-primary' : 'text-muted-foreground'}>{row.isAvailable ? 'Available' : 'Unavailable'}</span> }, { label: 'Actions', className: 'text-right', cell: (row) => <div className="flex justify-end gap-1"><Button variant="ghost" size="icon" onClick={() => setForm(toForm(row))}><Pencil className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={() => void remove(row)}><Trash2 className="h-4 w-4 text-destructive" /></Button></div> }];
-  return <div className="space-y-6"><section className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Operations</p><h1 className="mt-2 font-serif text-4xl tracking-tight">Campsite management</h1><p className="mt-3 text-muted-foreground">Update site details and immediately control availability.</p></div><Button onClick={() => setForm(blankForm())}><Plus />Add campsite</Button></section>{error && <ErrorState title="Campsites unavailable" message={error} />}<Card className="overflow-hidden"><DataTableControls search={search} onSearch={setSearch} filter={filter} onFilter={setFilter} filterOptions={[{ value: 'all', label: 'All availability' }, { value: 'available', label: 'Available' }, { value: 'unavailable', label: 'Unavailable' }]} placeholder="Search campsites…" />{loading ? <div className="grid min-h-64 place-items-center"><Spinner className="size-6 text-primary" /></div> : data.rows.length ? <><DataTable columns={columns} rows={data.rows} rowKey={idOf} onSort={(key) => { setOrder(key === sort && order === 'asc' ? 'desc' : 'asc'); setSort(key); }} /><DataTablePagination page={data.page} totalPages={data.totalPages} onPageChange={load} /></> : <CardContent className="p-10 text-center text-sm text-muted-foreground">No campsites match these controls.</CardContent>}</Card><Dialog open={!!form} onOpenChange={(open) => !open && setForm(null)}><DialogContent><DialogHeader><DialogTitle>{form?.id ? 'Edit campsite' : 'Add campsite'}</DialogTitle></DialogHeader>{form && <form className="space-y-4" onSubmit={save}><div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label>Campground</Label><Select value={form.campground} onValueChange={(value) => setForm({ ...form, campground: value })}><SelectTrigger><SelectValue placeholder="Choose campground" /></SelectTrigger><SelectContent>{campgrounds.map((campground) => <SelectItem key={idOf(campground)} value={idOf(campground)}>{campground.name}</SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><Label>Type</Label><Select value={form.type} onValueChange={(value) => setForm({ ...form, type: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{['tent', 'rv', 'cabin', 'glamping', 'group'].map((type) => <SelectItem key={type} value={type} className="capitalize">{type}</SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><Label htmlFor="site-name">Name</Label><Input id="site-name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required /></div><div className="space-y-2"><Label htmlFor="site-number">Site number</Label><Input id="site-number" value={form.siteNumber} onChange={(event) => setForm({ ...form, siteNumber: event.target.value })} required /></div><div className="space-y-2"><Label htmlFor="site-guests">Max guests</Label><Input id="site-guests" type="number" min="1" value={form.maxGuests} onChange={(event) => setForm({ ...form, maxGuests: event.target.value })} required /></div><div className="space-y-2"><Label htmlFor="site-price">Nightly price</Label><Input id="site-price" type="number" min="0" step="0.01" value={form.basePrice} onChange={(event) => setForm({ ...form, basePrice: event.target.value })} required /></div></div><div className="space-y-2"><Label htmlFor="site-description">Description</Label><Input id="site-description" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></div><div className="flex items-center justify-between rounded-lg border p-3"><div><p className="text-sm font-medium">Available to book</p><p className="text-xs text-muted-foreground">Shows this campsite as bookable in the customer flow.</p></div><Switch checked={form.isAvailable} onCheckedChange={(value) => setForm({ ...form, isAvailable: value })} /></div><Button type="submit" className="w-full" disabled={saving}>{saving ? <><Spinner />Saving…</> : 'Save campsite'}</Button></form>}</DialogContent></Dialog></div>;
+
+  const save = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!form) return;
+    if (!form.campground || !form.name || !form.siteNumber || Number(form.maxGuests) < 1 || Number(form.basePrice) < 0) {
+      setError('Complete the required campsite fields with valid values.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const input = {
+        campground: form.campground,
+        name: form.name,
+        siteNumber: form.siteNumber,
+        type: form.type,
+        description: form.description || undefined,
+        capacity: { maxGuests: Number(form.maxGuests) },
+        basePrice: Number(form.basePrice),
+        isAvailable: form.isAvailable,
+      };
+      if (form.id) await updateCampsite(form.id, input);
+      else await createCampsite(input);
+      toast.success(form.id ? 'Campsite updated' : 'Campsite created');
+      setForm(null);
+      load();
+    } catch (caught) {
+      setError(apiError(caught, 'We could not save this campsite.'));
+    } finally { setSaving(false); }
+  };
+
+  const remove = async (site: ApiItem) => {
+    if (!window.confirm(`Delete ${site.name ?? site.siteNumber}? This cannot be undone.`)) return;
+    try { await deleteCampsite(idOf(site)); toast.success('Campsite deleted'); load(); }
+    catch (caught) { setError(apiError(caught, 'We could not delete this campsite.')); }
+  };
+
+  const columns: DataColumn<ApiItem>[] = [
+    { label: 'Campsite', sortKey: 'name', cell: (row) => {
+      const meta = siteTypeMeta(row.type);
+      return (
+        <div className="flex items-center gap-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-secondary text-primary">
+            <meta.Icon className="h-4 w-4" strokeWidth={1.75} />
+          </span>
+          <div>
+            <p className="font-medium">{row.name}</p>
+            <p className="text-xs text-muted-foreground">Site {row.siteNumber} · {meta.label}</p>
+          </div>
+        </div>
+      );
+    } },
+    { label: 'Campground', cell: (row) => labelOf(row.campground, '—') },
+    { label: 'Capacity', cell: (row) => (
+      <span className="inline-flex items-center gap-1.5 text-sm">
+        <UsersRound className="h-3.5 w-3.5 text-muted-foreground" />
+        {row.capacity?.maxGuests ?? 0} guests
+      </span>
+    ) },
+    { label: 'Nightly rate', sortKey: 'basePrice', cell: (row) => (
+      <span className="font-serif text-base font-medium">${Number(row.basePrice ?? 0).toFixed(2)}</span>
+    ) },
+    { label: 'Availability', cell: (row) => row.isAvailable
+      ? <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary"><span className="h-1.5 w-1.5 rounded-full bg-primary" /> Available</span>
+      : <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60" /> Unavailable</span>
+    },
+    { label: '', className: 'text-right', cell: (row) => (
+      <div className="flex justify-end gap-1">
+        <Button variant="ghost" size="icon" title="Edit campsite" onClick={() => setForm(toForm(row))}>
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" title="Delete campsite" onClick={() => void remove(row)}>
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </div>
+    ) },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <section className="flex flex-wrap items-end justify-between gap-6 border-b border-border pb-6">
+        <div className="max-w-2xl">
+          <p className="eyebrow">Operations · Inventory</p>
+          <h1 className="display-3 mt-3">Campsite management</h1>
+          <p className="lede mt-3">
+            Update site details and immediately control availability across every campground in your scope.
+          </p>
+        </div>
+        <Button onClick={() => setForm(blankForm())}>
+          <Plus />Add campsite
+        </Button>
+      </section>
+
+      {error && <ErrorState title="Campsites unavailable" message={error} />}
+
+      <Card className="overflow-hidden rounded-md border border-card-border bg-card">
+        <DataTableControls
+          search={search}
+          onSearch={setSearch}
+          filter={filter}
+          onFilter={setFilter}
+          filterOptions={[
+            { value: 'all', label: 'All availability' },
+            { value: 'available', label: 'Available' },
+            { value: 'unavailable', label: 'Unavailable' },
+          ]}
+          placeholder="Search campsites…"
+        />
+        {loading ? (
+          <div className="grid min-h-64 place-items-center">
+            <Spinner className="size-6 text-primary" />
+          </div>
+        ) : data.rows.length ? (
+          <>
+            <DataTable
+              columns={columns}
+              rows={data.rows}
+              rowKey={idOf}
+              onSort={(key) => { setOrder(key === sort && order === 'asc' ? 'desc' : 'asc'); setSort(key); }}
+            />
+            <DataTablePagination page={data.page} totalPages={data.totalPages} onPageChange={load} />
+          </>
+        ) : (
+          <CardContent className="grid place-items-center gap-2 p-12 text-center">
+            <MapPinned className="h-8 w-8 text-muted-foreground/60" strokeWidth={1.5} />
+            <p className="text-sm text-muted-foreground">No campsites match these controls.</p>
+          </CardContent>
+        )}
+      </Card>
+
+      <Dialog open={!!form} onOpenChange={(open) => !open && setForm(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-xl">{form?.id ? 'Edit campsite' : 'Add campsite'}</DialogTitle>
+          </DialogHeader>
+          {form && (
+            <form className="space-y-4" onSubmit={save}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Campground</Label>
+                  <Select value={form.campground} onValueChange={(value) => setForm({ ...form, campground: value })}>
+                    <SelectTrigger><SelectValue placeholder="Choose campground" /></SelectTrigger>
+                    <SelectContent>
+                      {campgrounds.map((campground) => (
+                        <SelectItem key={idOf(campground)} value={idOf(campground)}>{campground.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Type</Label>
+                  <Select value={form.type} onValueChange={(value) => setForm({ ...form, type: value })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {['tent', 'rv', 'cabin', 'glamping', 'group'].map((type) => (
+                        <SelectItem key={type} value={type} className="capitalize">{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="site-number">Site number</Label>
+                  <Input id="site-number" value={form.siteNumber} onChange={(event) => setForm({ ...form, siteNumber: event.target.value })} required />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="site-name">Name</Label>
+                  <Input id="site-name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="site-guests">Max guests</Label>
+                  <Input id="site-guests" type="number" min="1" value={form.maxGuests} onChange={(event) => setForm({ ...form, maxGuests: event.target.value })} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="site-price">Nightly price</Label>
+                  <Input id="site-price" type="number" min="0" step="0.01" value={form.basePrice} onChange={(event) => setForm({ ...form, basePrice: event.target.value })} required />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="site-description">Description</Label>
+                  <Input id="site-description" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
+                </div>
+              </div>
+              <div className="flex items-center justify-between rounded-md border border-border bg-secondary/40 px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium">Available to book</p>
+                  <p className="text-xs text-muted-foreground">Shows this campsite as bookable in the customer flow.</p>
+                </div>
+                <Switch checked={form.isAvailable} onCheckedChange={(value) => setForm({ ...form, isAvailable: value })} />
+              </div>
+              <Button type="submit" className="w-full" disabled={saving}>
+                {saving ? <><Spinner />Saving…</> : 'Save campsite'}
+              </Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }

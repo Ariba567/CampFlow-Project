@@ -49,9 +49,9 @@ export default function ReviewForm({ campgroundId, reservationId, existingReview
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <Label>Your rating</Label>
+        <Label className="text-foreground">Your rating</Label>
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
@@ -60,7 +60,7 @@ export default function ReviewForm({ campgroundId, reservationId, existingReview
               onClick={() => setRating(star)}
               onMouseEnter={() => setHoverRating(star)}
               onMouseLeave={() => setHoverRating(0)}
-              className="focus:outline-none"
+              className="rounded-sm p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label={`Rate ${star} star${star === 1 ? '' : 's'}`}
             >
               <Star
@@ -73,11 +73,13 @@ export default function ReviewForm({ campgroundId, reservationId, existingReview
             </button>
           ))}
         </div>
-        {rating > 0 && <p className="text-xs text-muted-foreground">{rating} star{rating !== 1 ? 's' : ''}</p>}
+        {rating > 0 && (
+          <p className="text-xs text-muted-foreground">{rating} star{rating !== 1 ? 's' : ''}</p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="comment">Your review</Label>
+        <Label htmlFor="comment" className="text-foreground">Your review</Label>
         <Textarea
           id="comment"
           value={comment}
@@ -86,18 +88,21 @@ export default function ReviewForm({ campgroundId, reservationId, existingReview
           rows={5}
           maxLength={500}
           required
+          className="border-border bg-card"
         />
-        <div className="flex justify-between">
-          {comment.length < 10 && (
-            <p className="text-xs text-muted-foreground">{10 - comment.length} more characters needed</p>
-          )}
-          <p className="text-xs text-muted-foreground">{comment.length}/500 characters</p>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>{comment.length < 10 ? `${10 - comment.length} more characters needed` : '\u00A0'}</span>
+          <span>{comment.length}/500 characters</span>
         </div>
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <Button type="submit" disabled={saving || rating === 0 || comment.trim().length < 10}>
+      <Button
+        type="submit"
+        disabled={saving || rating === 0 || comment.trim().length < 10}
+        className="bg-primary text-primary-foreground hover:bg-primary/90"
+      >
         {saving ? 'Saving...' : isEdit ? 'Update review' : 'Post review'}
       </Button>
     </form>
