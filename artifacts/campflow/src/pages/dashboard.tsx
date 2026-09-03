@@ -131,18 +131,53 @@ export default function Dashboard() {
             </Button>
           </div>
           {upcoming.length ? (
-            <div className="space-y-px bg-border">
-              {upcoming.slice(0, 3).map((reservation) => (
-                <article key={reservation._id} className="flex flex-wrap items-center justify-between gap-4 bg-card p-6">
-                  <div className="space-y-1">
-                    <p className="font-serif text-xl">{labelOf(reservation.campground, 'Green Valley')}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {String(reservation.checkIn).slice(0, 10)} &mdash; {String(reservation.checkOut).slice(0, 10)}
-                    </p>
-                  </div>
-                  <ReservationStatus status={reservation.status} />
-                </article>
-              ))}
+            <div className="space-y-4">
+              {upcoming.slice(0, 3).map((reservation) => {
+                const siteName = labelOf(reservation.campsite, 'Campsite');
+                const total = Number(reservation.pricing?.total ?? 0);
+                const nights = Number(reservation.pricing?.nights ?? 0);
+                const rsvNumber = String(reservation.reservationNumber ?? '').slice(-6);
+                return (
+                  <article key={reservation._id} className="border border-border bg-card p-6">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <p className="font-serif text-xl text-foreground">{labelOf(reservation.campground, 'Campground')}</p>
+                        <p className="mt-1 text-sm text-foreground">{siteName}</p>
+                        <p className="mt-0.5 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                          {rsvNumber ? `#${rsvNumber}` : ''}
+                        </p>
+                      </div>
+                      <ReservationStatus status={reservation.status} />
+                    </div>
+                    <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 border-t border-border pt-4 text-sm sm:grid-cols-4">
+                      <div>
+                        <dt className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Check-in</dt>
+                        <dd className="mt-0.5 font-medium text-foreground">{String(reservation.checkIn).slice(0, 10)}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Check-out</dt>
+                        <dd className="mt-0.5 font-medium text-foreground">{String(reservation.checkOut).slice(0, 10)}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Nights</dt>
+                        <dd className="mt-0.5 font-medium text-foreground">{nights || '—'}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Total</dt>
+                        <dd className="mt-0.5 font-serif text-base text-foreground">${total.toFixed(2)}</dd>
+                      </div>
+                    </dl>
+                    <div className="mt-4 flex items-center justify-end gap-3">
+                      <Button asChild variant="outline" size="sm">
+                        <Link to="/dashboard/bookings">Manage booking</Link>
+                      </Button>
+                      <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                        <Link to={`/reservation/confirmation/${reservation._id}`}>View confirmation</Link>
+                      </Button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           ) : (
             <div className="border border-dashed border-border bg-card p-10 text-center">
@@ -196,18 +231,36 @@ export default function Dashboard() {
           </Button>
         </div>
         {recentPast.length ? (
-          <div className="space-y-px bg-border">
-            {recentPast.map((reservation) => (
-              <article key={reservation._id} className="flex flex-wrap items-center justify-between gap-4 bg-card p-6">
-                <div className="space-y-1">
-                  <p className="font-serif text-xl">{labelOf(reservation.campground, 'Green Valley')}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {String(reservation.checkIn).slice(0, 10)} &mdash; {String(reservation.checkOut).slice(0, 10)}
-                  </p>
-                </div>
-                <ReservationStatus status={reservation.status} />
-              </article>
-            ))}
+          <div className="mt-6 overflow-x-auto border border-border/60">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-secondary/60 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                <tr>
+                  <th className="px-5 py-4 font-medium">Campground</th>
+                  <th className="px-5 py-4 font-medium">Dates</th>
+                  <th className="px-5 py-4 font-medium text-right">Total</th>
+                  <th className="px-5 py-4 font-medium text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {recentPast.map((reservation) => (
+                  <tr key={reservation._id} className="bg-card">
+                    <td className="px-5 py-4">
+                      <p className="font-serif text-base text-foreground">{labelOf(reservation.campground, 'Campground')}</p>
+                      <p className="text-xs text-muted-foreground">{labelOf(reservation.campsite, 'Campsite')}</p>
+                    </td>
+                    <td className="px-5 py-4 text-muted-foreground">
+                      {String(reservation.checkIn).slice(0, 10)} — {String(reservation.checkOut).slice(0, 10)}
+                    </td>
+                    <td className="px-5 py-4 text-right font-medium text-foreground">
+                      ${Number(reservation.pricing?.total ?? 0).toFixed(2)}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <ReservationStatus status={reservation.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <p className="lede">No completed stays yet. The first one is the one you tell stories about.</p>

@@ -237,7 +237,17 @@ export default function CampgroundDetail() {
   if (error || !campground) {
     return (
       <div className="container-page grid min-h-[50vh] place-items-center">
-        <p className="lede text-destructive">{error ?? 'Campground not found.'}</p>
+        <div className="max-w-md text-center">
+          <p className="lede text-destructive">{error ?? 'Campground not found.'}</p>
+          <div className="mt-6 flex justify-center gap-3">
+            <Button asChild variant="outline">
+              <Link to="/campgrounds">Browse all campgrounds</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/">Back home</Link>
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -280,7 +290,7 @@ export default function CampgroundDetail() {
     return a < b ? Math.ceil((b.getTime() - a.getTime()) / 86400000) : 0;
   }, [arrival, departure]);
 
-  const reservationUrl = `/reservation?campground=${campgroundId}&arrival=${arrival}&departure=${departure}&guests=${encodeURIComponent(guests)}`;
+  const reservationUrl = `/reservation?campground=${campgroundId}&checkIn=${arrival}&checkOut=${departure}&guests=${encodeURIComponent(guests)}`;
 
   return (
     <TooltipProvider delayDuration={120}>

@@ -47,7 +47,6 @@ export default function ReservationConfirmation() {
   const subtotal = Number(reservation?.pricing?.subtotal ?? total);
   const taxes = Number(reservation?.pricing?.taxes ?? 0);
   const fees = Number(reservation?.pricing?.fees ?? 0);
-  const baseRate = Number(reservation?.pricing?.baseRate ?? 0);
   const nights = Number(reservation?.pricing?.nights ?? 0);
   const guests = reservation?.guests as
     | { adults?: number; children?: number; vehicles?: number }
@@ -136,11 +135,17 @@ export default function ReservationConfirmation() {
           <div className="border-t border-border bg-secondary/40 px-6 py-5 md:px-8">
             <p className="eyebrow text-muted-foreground">Price breakdown</p>
             <dl className="mt-4 space-y-2.5 text-sm">
-              {nights > 0 && baseRate > 0 && (
+              {nights > 0 && subtotal > 0 && (
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">
-                    ${baseRate.toFixed(2)} <span className="text-muted-foreground/70">×</span> {nights} night{nights === 1 ? '' : 's'}
+                    ${(subtotal / nights).toFixed(2)} <span className="text-muted-foreground/70">×</span> {nights} night{nights === 1 ? '' : 's'}
                   </dt>
+                  <dd className="font-medium tabular-nums">${subtotal.toFixed(2)}</dd>
+                </div>
+              )}
+              {subtotal > 0 && (
+                <div className="flex justify-between border-t border-border/70 pt-2">
+                  <dt className="text-muted-foreground">Subtotal</dt>
                   <dd className="font-medium tabular-nums">${subtotal.toFixed(2)}</dd>
                 </div>
               )}

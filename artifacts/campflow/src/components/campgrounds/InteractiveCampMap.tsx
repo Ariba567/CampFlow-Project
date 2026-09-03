@@ -155,15 +155,15 @@ export default function InteractiveCampMap({
 
       {liveSites.length > 0 && !availabilityError && (
         <div className="flex items-center gap-4 border-b border-border bg-card px-4 py-3 text-xs">
-          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 font-medium text-foreground/85">
             <span className="size-2 rounded-full bg-accent" />
             {availableCount} open
           </span>
           <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <span className="size-2 rounded-full bg-muted-foreground/40" />
+            <span className="size-2 rounded-full bg-muted-foreground/50" />
             {occupiedCount} occupied
           </span>
-          <span className="ml-auto text-muted-foreground">Tap any open site to reserve</span>
+          <span className="ml-auto hidden text-muted-foreground sm:inline">Tap any open site to reserve</span>
         </div>
       )}
 
@@ -194,7 +194,7 @@ export default function InteractiveCampMap({
                     disabled={!isAvailable}
                     onClick={() => setSelectedId(site.id)}
                     style={{ left: `${site.x}%`, top: `${site.y}%` }}
-                    className={`absolute h-9 w-9 -translate-x-1/2 -translate-y-1/2 border text-[10px] font-bold transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40 ${
+                    className={`absolute z-10 h-9 w-9 -translate-x-1/2 -translate-y-1/2 border text-[10px] font-bold transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40 ${
                       isAvailable ? typeColors[site.type] : occupiedStyle
                     } ${isSelected ? 'ring-2 ring-accent ring-offset-2 ring-offset-background' : ''}`}
                     aria-label={`${site.id}, ${siteCategories[site.type].name}, ${isAvailable ? 'available' : 'occupied'}`}

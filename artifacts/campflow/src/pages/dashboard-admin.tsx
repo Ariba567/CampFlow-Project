@@ -80,36 +80,67 @@ export default function DashboardAdmin() {
         ))}
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-2">
+      <section className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
         <Card className="border-border/70 bg-card shadow-soft">
           <CardContent className="p-6 sm:p-8">
-            <p className="eyebrow">Daily workflow</p>
-            <h2 className="display-3 mt-3">Keep every stay on track.</h2>
-            <p className="lede mt-3 max-w-md">
-              Approve new requests, update stay statuses, and surface customer information from one operational workspace.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button asChild variant="outline" className="rounded-md">
-                <Link to="/dashboard/admin/calendar">Open calendar</Link>
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="eyebrow">Operational overview</p>
+                <h2 className="display-3 mt-3">Work the queue.</h2>
+              </div>
+              <Button asChild variant="outline" size="sm" className="rounded-md">
+                <Link to="/dashboard/admin/reservations">Open bookings</Link>
               </Button>
-              <Button asChild variant="outline" className="rounded-md">
-                <Link to="/dashboard/admin/campsites">Manage campsites</Link>
-              </Button>
+            </div>
+            <div className="mt-6 grid gap-px border border-border bg-border sm:grid-cols-2">
+              {(role === 'admin'
+                ? [
+                    { label: 'Campgrounds', value: summary.totalCampgrounds ?? 0, to: '/dashboard/admin/campgrounds' },
+                    { label: 'Campsites', value: summary.totalCampsites ?? 0, to: '/dashboard/admin/campsites' },
+                    { label: 'Customers', value: summary.totalCustomers ?? 0, to: '/dashboard/admin/customers' },
+                    { label: 'Staff & roles', value: Number(summary.totalManagers ?? 0) + Number(summary.totalAdmins ?? 0), to: '/dashboard/admin/users' },
+                  ]
+                : [
+                    { label: 'Upcoming arrivals', value: summary.upcomingReservations ?? 0, to: '/dashboard/admin/reservations' },
+                    { label: 'Awaiting approval', value: summary.pendingReservations ?? 0, to: '/dashboard/admin/reservations' },
+                    { label: 'Unread updates', value: summary.unreadNotifications ?? 0, to: '/dashboard/admin/reservations' },
+                    { label: 'Revenue to date', value: `$${Number(summary.revenue ?? 0).toLocaleString()}`, to: '/dashboard/admin/pricing' },
+                  ]
+              ).map((item) => (
+                <Link key={item.label} to={item.to} className="group block bg-card p-5 hover:bg-secondary/40">
+                  <p className="font-serif text-3xl text-foreground">{item.value}</p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                    Open <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              ))}
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-border/70 bg-card shadow-soft">
           <CardContent className="p-6 sm:p-8">
-            <p className="eyebrow">Access scope</p>
-            <h2 className="display-3 mt-3">
-              {role === 'admin' ? 'Organization-wide control' : 'Your campground operations'}
-            </h2>
+            <p className="eyebrow">Rates & reporting</p>
+            <h2 className="display-3 mt-3">Keep pricing honest.</h2>
             <p className="lede mt-3">
               {role === 'admin'
-                ? 'You can view and manage reservations and campsites across the organization.'
-                : 'Your data and actions are scoped by the backend to campgrounds you manage.'}
+                ? 'Adjust seasonal tiers, weekend and holiday rates, and monitor performance across the network.'
+                : 'Update the rates and availability for the campgrounds you manage, then keep arrivals on track.'}
             </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button asChild variant="outline" className="rounded-md">
+                <Link to="/dashboard/admin/pricing">Manage pricing</Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-md">
+                <Link to="/dashboard/admin/calendar">Booking calendar</Link>
+              </Button>
+              {role === 'admin' && (
+                <Button asChild variant="outline" className="rounded-md">
+                  <Link to="/dashboard/admin/analytics">Revenue report</Link>
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       </section>

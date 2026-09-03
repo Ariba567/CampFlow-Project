@@ -122,11 +122,28 @@ export default function Reservation() {
     };
   }, [selectedCampground, selectedSite, selectedSiteId, checkIn, checkOut, nights]);
 
-  const total = Number(quote?.subtotal ?? 0);
-  const taxes = Number(quote?.taxes ?? Math.round(total * 0.1 * 100) / 100);
+  const subtotal = Number(quote?.subtotal ?? 0);
+  const taxes = Number(quote?.taxes ?? Math.round(subtotal * 0.1 * 100) / 100);
   const fees = Number(quote?.fees ?? 0);
-  const baseRate = Number(quote?.baseRate ?? 0);
-  const grandTotal = Number(quote?.total ?? total + taxes + fees);
+  const discount = Number(quote?.discount ?? 0);
+  const grandTotal = Number(quote?.total ?? subtotal + taxes + fees);
+  const nightlyAverage = nights > 0 ? subtotal / nights : 0;
+  const nightBreakdown = useMemo<Array<{ date: string; rateLabel: string; rate: number }>>(
+    () => (Array.isArray(quote?.nightBreakdown) ? quote.nightBreakdown : []),
+    [quote],
+  );
+  const tierBreakdown = useMemo(() => {
+    const grouped = new Map<string, { label: string; rate: number; nights: number }>();
+    for (const night of nightBreakdown) {
+      const existing = grouped.get(night.rateLabel);
+      if (existing) {
+        existing.nights += 1;
+      } else {
+        grouped.set(night.rateLabel, { label: night.rateLabel, rate: Number(night.rate), nights: 1 });
+      }
+    }
+    return Array.from(grouped.values());
+  }, [nightBreakdown]);
 
   useEffect(() => {
     listCampgrounds()
@@ -222,9 +239,9 @@ export default function Reservation() {
         },
         specialRequests: values.specialRequests || undefined,
         pricing: {
-          baseRate: Number(quote.baseRate ?? total),
+          baseRate: Number(quote.baseRate ?? subtotal),
           nights: Number(quote.nights ?? nights),
-          subtotal: Number(quote.subtotal ?? total),
+          subtotal: Number(quote.subtotal ?? subtotal),
           taxes: Number(quote.taxes ?? taxes),
           fees: Number(quote.fees ?? fees),
           discount: Number(quote.discount ?? 0),
@@ -662,22 +679,60 @@ export default function Reservation() {
                       </div>
                     ) : quote ? (
                       <dl className="mt-3 space-y-2.5 text-sm">
-                        <div className="flex justify-between">
-                          <dt className="text-muted-foreground">
-                            ${baseRate.toFixed(2)} <span className="text-muted-foreground/70">×</span> {nights} night{nights === 1 ? '' : 's'}
-                          </dt>
-                          <dd className="font-medium tabular-nums">${total.toFixed(2)}</dd>
-                        </div>
+                        {tierBreakdown.length > 0 && (
+                          <div>
+                            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                              Price tier{selectedSite?.type ? ` · ${String(selectedSite.type)}` : ''}
+                            </p>
+                            <ul className="space-y-1.5">
+                              {tierBreakdown.map((tier) => (
+                                <li key={tier.label} className="flex items-center justify-between gap-3">
+                                  <span className="inline-flex items-center gap-2">
+                                    <span className="inline-flex items-center justify-center border border-border bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                                      {tier.label}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      ${tier.rate.toFixed(2)} <span className="text-muted-foreground/70">×</span> {tier.nights} night{tier.nights === 1 ? '' : 's'}
+                                    </span>
+                                  </span>
+                                  <span className="font-medium tabular-nums text-foreground">${(tier.rate * tier.nights).toFixed(2)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {tierBreakdown.length === 0 && nightlyAverage > 0 && (
+                          <div className="flex justify-between">
+                            <dt className="text-muted-foreground">
+                              ${nightlyAverage.toFixed(2)} <span className="text-muted-foreground/70">×</span> {nights} night{nights === 1 ? '' : 's'}
+                            </dt>
+                            <dd className="font-medium tabular-nums">${subtotal.toFixed(2)}</dd>
+                          </div>
+                        )}
+                        {subtotal > 0 && (
+                          <div className="flex justify-between border-t border-border/70 pt-2">
+                            <dt className="text-muted-foreground">Subtotal</dt>
+                            <dd className="font-medium tabular-nums text-foreground">${subtotal.toFixed(2)}</dd>
+                          </div>
+                        )}
                         {fees > 0 && (
                           <div className="flex justify-between">
                             <dt className="text-muted-foreground">Cleaning & service fee</dt>
                             <dd className="font-medium tabular-nums">${fees.toFixed(2)}</dd>
                           </div>
                         )}
-                        <div className="flex justify-between">
-                          <dt className="text-muted-foreground">Taxes</dt>
-                          <dd className="font-medium tabular-nums">${taxes.toFixed(2)}</dd>
-                        </div>
+                        {taxes > 0 && (
+                          <div className="flex justify-between">
+                            <dt className="text-muted-foreground">Taxes</dt>
+                            <dd className="font-medium tabular-nums">${taxes.toFixed(2)}</dd>
+                          </div>
+                        )}
+                        {discount > 0 && (
+                          <div className="flex justify-between text-primary">
+                            <dt>Discount</dt>
+                            <dd className="font-medium tabular-nums">-${discount.toFixed(2)}</dd>
+                          </div>
+                        )}
                         <div className="mt-3 flex items-baseline justify-between border-t border-border pt-4">
                           <dt className="font-serif text-base text-foreground">Total <span className="ml-1 text-xs font-sans font-normal text-muted-foreground">USD</span></dt>
                           <dd className="font-serif text-3xl text-primary tabular-nums">${grandTotal.toFixed(2)}</dd>

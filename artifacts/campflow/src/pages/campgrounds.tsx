@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BedDouble, CalendarDays, Caravan, MapPin, Search, SlidersHorizontal, Tent, Trees, Users } from 'lucide-react';
+import { ArrowRight, BedDouble, CalendarDays, Caravan, MapPin, Search, SlidersHorizontal, Star, Tent, Trees, Users } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import CampsiteCategories from '@/components/campgrounds/CampsiteCategories';
 import { listCampgrounds, type ApiItem } from '@/services/customerDashboardService';
@@ -409,10 +409,21 @@ export default function Campgrounds() {
                     </Link>
 
                     <div className={`md:col-span-7 ${reverse ? 'md:order-1' : ''}`}>
-                      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground inline-flex items-center gap-1.5">
-                        <MapPin className="h-3 w-3 text-accent" />
-                        {locationLabel(campground)}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5">
+                          <MapPin className="h-3 w-3 text-accent" />
+                          {locationLabel(campground)}
+                        </span>
+                        {Number(campground.rating?.average) > 0 && (
+                          <span className="inline-flex items-center gap-1">
+                            <Star className="h-3 w-3 fill-accent text-accent" />
+                            {Number(campground.rating.average).toFixed(1)}
+                            {Number(campground.rating.count) > 0 && (
+                              <span className="tracking-normal normal-case">({campground.rating.count})</span>
+                            )}
+                          </span>
+                        )}
+                      </div>
                       <h3 className="display-2 mt-3">
                         <Link to={`/campgrounds/${campground.slug}?arrival=${arrival}&departure=${departure}&guests=${encodeURIComponent(guests)}`} className="hover:text-primary">
                           {campground.name}
